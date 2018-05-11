@@ -1,0 +1,38 @@
+
+
+version: '3'
+services:
+  node-1:
+    image: leodotcloud/swiss-army-knife
+    hostname: node-1
+    networks:
+      - node-1
+  node-2:
+    image: leodotcloud/swiss-army-knife
+    hostname: node-2
+    networks:
+      - node-2
+  node-3:
+    image: leodotcloud/swiss-army-knife
+    hostname: node-3
+    networks:
+      - node-3
+  node-4:
+    image: leodotcloud/swiss-army-knife
+    hostname: node-4
+    networks:
+      - node-4
+  node-5:
+    image: leodotcloud/swiss-army-knife
+    hostname: node-5
+    networks:
+      - node-5
+
+
+networks:
+  node-1:
+  node-2:
+  node-3:
+  node-4:
+  node-5:
+

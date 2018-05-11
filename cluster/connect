@@ -1,0 +1,4 @@
+#!/bin/sh
+
+docker network connect cluster_node-$1 cluster_node-$2_1
+docker network connect cluster_node-$2 cluster_node-$1_1
