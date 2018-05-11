@@ -1,4 +1,5 @@
 
+# Cluster topology
 
 cd cluster
 
@@ -6,19 +7,19 @@ cd cluster
 
 ./up
 
-
 # Shutdown cluster nodes
 
 ./down
 
-# Connect nodes 1 and 2
+# Connect node 3 to network A
 
-./connect 1 2
+./connect A 3
 
-# Disconnect nodes 1 and 2
+# Disconnect nodes 3 from network A
 
-./disconnect 1 2
+./disconnect A 3
 
-# Run console
+# Connect to console of node 1
 
 ./console 1
+
