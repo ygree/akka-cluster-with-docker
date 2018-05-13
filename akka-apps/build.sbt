@@ -20,6 +20,6 @@ enablePlugins(DockerPlugin)
 
 mainClass in Compile := Some("simple.App")
 
-//dockerBaseImage := "openjdk:jre-alpine"
-//enablePlugins(AshScriptPlugin)
+dockerBaseImage := "java-base:latest"
+enablePlugins(AshScriptPlugin)
 

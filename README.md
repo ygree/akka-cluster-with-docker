@@ -1,4 +1,26 @@
 
+1. Build java-base docker image that include iptables to emulate network issues
+
+```
+cd docker-image
+./build
+```
+
+2. Build application
+
+```
+cd akka-apps
+./build
+```
+
+3. Run cluster 
+
+```
+cd cluster
+
+./up
+```
+
 # Cluster topology
 
 cd cluster
@@ -23,3 +45,9 @@ cd cluster
 
 ./console 1
 
+
+# IPTables turn off all iptables communications
+
+docker-compose exec node-1 sudo iptables -A INPUT -j DROP
+
+docker-compose exec node-1 sudo iptables -D INPUT -j DROP

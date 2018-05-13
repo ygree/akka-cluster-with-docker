@@ -1,0 +1,21 @@
+#!/bin/sh
+
+if [ "$#" -ne 3 ]; then
+  echo "Illegal number of parameters. Passed: $#.\nExpected three params: {on|off} <blocking-node> <blocked-node>."
+
+elif [ "$1" == "off" ]; then
+
+  docker-compose exec node-$2 sudo iptables  -A INPUT -s node-$3 -j DROP
+  echo "Block $2 <- $3"
+
+elif [ "$1" = "on" ]; then
+
+  docker-compose exec node-$2 sudo iptables  -D INPUT -s node-$3 -j DROP
+  echo "Un-Block $2 <- $3"
+
+else
+  echo "Unexpected first param: $1\nExpected three params: {on|off} <blocking-node> <blocked-node>."
+
+fi
+
+

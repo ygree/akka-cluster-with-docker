@@ -1,9 +1,11 @@
 
 
 version: '3'
+
 services:
   node-1:
     image: akka-quickstart-scala:1.0
+    privileged: true
     hostname: node-1
     networks:
     #  - net-1
@@ -11,6 +13,7 @@ services:
       - net-A
   node-2:
     image: akka-quickstart-scala:1.0
+    privileged: true
     hostname: node-2
     networks:
     #  - net-2
@@ -18,6 +21,7 @@ services:
       - net-A
   node-3:
     image: akka-quickstart-scala:1.0
+    privileged: true
     hostname: node-3
     networks:
     #  - net-3
@@ -26,6 +30,7 @@ services:
   node-4:
     image: akka-quickstart-scala:1.0
     hostname: node-4
+    privileged: true
     networks:
     #  - net-4
       - net-0
@@ -33,6 +38,7 @@ services:
   node-5:
     image: akka-quickstart-scala:1.0
     hostname: node-5
+    privileged: true
     networks:
     #  - net-5
       - net-0

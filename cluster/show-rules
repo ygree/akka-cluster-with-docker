@@ -1,0 +1,4 @@
+#!/bin/sh
+
+docker-compose exec node-$1 sudo iptables -L INPUT
+
