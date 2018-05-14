@@ -4,23 +4,23 @@ version: '3'
 
 services:
   node-1:
-    build: .
+    image: akka-cluster-demo:demo
     hostname: node-1
     privileged: true
   node-2:
-    build: .
+    image: akka-cluster-demo:demo
     hostname: node-2
     privileged: true
   node-3:
-    build: .
+    image: akka-cluster-demo:demo
     hostname: node-3
     privileged: true
   node-4:
-    build: .
+    image: akka-cluster-demo:demo
     hostname: node-4
     privileged: true
   node-5:
-    build: .
+    image: akka-cluster-demo:demo
     hostname: node-5
     privileged: true
 
