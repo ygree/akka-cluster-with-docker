@@ -1,4 +1,4 @@
-FROM akka-quickstart-scala:1.0
+FROM akka-cluster-demo:1.0
 
 COPY app.conf /opt/docker
 
