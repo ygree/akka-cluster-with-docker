@@ -1,19 +1,13 @@
 
-1. Build java-base docker image that include iptables to emulate network issues
 
-```
-cd docker-image
-./build
-```
-
-2. Build application
+1. Build application
 
 ```
 cd akka-apps
 ./build
 ```
 
-3. Run cluster 
+2. Run cluster 
 
 ```
 cd cluster
@@ -33,21 +27,22 @@ cd cluster
 
 ./down
 
-# Connect node 3 to network A
+# Emulate partitioning between nodes 1 and 3
 
-./connect A 3
+./connectivity off 1 3
 
-# Disconnect nodes 3 from network A
+# Restore connectivity between nodes 1 and 3
 
-./disconnect A 3
+./connectivity on 1 3
 
-# Connect to console of node 1
+# Clean up all iptable restrictions for node 4
 
-./console 1
+./clear-rules 4
 
+# Connect to node 5
 
-# IPTables turn off all iptables communications
+./console 5
 
-docker-compose exec node-1 sudo iptables -A INPUT -j DROP
+# Emulate network partitioning (1 2) (3 4 5)
 
-docker-compose exec node-1 sudo iptables -D INPUT -j DROP
+./connectivity-12-345 off

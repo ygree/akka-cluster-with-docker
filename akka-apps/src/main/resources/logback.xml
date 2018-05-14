@@ -10,7 +10,7 @@
     </appender>
 
     <appender name="file" class="ch.qos.logback.core.FileAppender">
-        <file>${neopixel.log-file:-neopixel.log}</file>
+        <file>${neopixel.log-file:-output.log}</file>
         <encoder>
             <pattern>%date{HH:mm:ss} %-5level [%X{akkaSource}] - %msg%n</pattern>
         </encoder>

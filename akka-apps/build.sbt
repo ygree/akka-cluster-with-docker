@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
+
 name := "akka-quickstart-scala"
 
 version := "1.0"
@@ -20,6 +22,12 @@ enablePlugins(DockerPlugin)
 
 mainClass in Compile := Some("simple.App")
 
-dockerBaseImage := "java-base:latest"
+//dockerBaseImage := "java-base:latest"
+dockerBaseImage := "openjdk:alpine"
+
+javaOptions in Universal ++= Seq(
+  "-Dconfig.file=/opt/docker/app.conf"
+)
+
 enablePlugins(AshScriptPlugin)
 
