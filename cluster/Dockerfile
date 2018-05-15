@@ -20,7 +20,11 @@ RUN apk update && \
 RUN echo "daemon ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/default;  \
     chmod 0440 /etc/sudoers.d/default
 
+RUN mkdir /evts
+RUN chown daemon:daemon /evts
+VOLUME [ "/evts" ]
 
 USER daemon
+
 
 

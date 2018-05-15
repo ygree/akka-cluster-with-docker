@@ -1,11 +1,16 @@
 package simple
 
-import akka.actor.{Actor, ActorLogging, Props}
+import java.nio.file.Paths
+
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
 import akka.cluster.MemberStatus.{Up, WeaklyUp}
+import akka.stream.{ActorMaterializer, OverflowStrategy}
 
 import scala.collection.immutable.SortedMap
+import akka.stream.scaladsl._
+import akka.util.ByteString
 
 object ClusterListener {
   def props(): Props = Props.create(classOf[ClusterListener], () => new ClusterListener)
@@ -13,12 +18,23 @@ object ClusterListener {
 
 final class ClusterListener extends Actor with ActorLogging {
 
+  implicit val materializer = ActorMaterializer.create(context)
+
   val cluster = Cluster(context.system)
+  var eventsRef: ActorRef = ActorRef.noSender
 
   // subscribe to cluster changes, re-subscribe when restart
   override def preStart(): Unit = {
+    val appConfig = context.system.settings.config.getConfig("app")
+    val eventsFilename = appConfig.getString("events-file")
+
+    val eventSink = FileIO.toPath(Paths.get(eventsFilename))
+    eventsRef = Source.actorRef[String](100, OverflowStrategy.dropNew).map(s => ByteString(s)).to(eventSink).run()
+
+    println("-----> eventsFilename: " + eventsFilename)
+
     cluster.subscribe(self, initialStateMode = InitialStateAsEvents,
-      classOf[MemberEvent], classOf[UnreachableMember])
+      classOf[MemberEvent], classOf[UnreachableMember], classOf[ReachableMember])
   }
   override def postStop(): Unit = cluster.unsubscribe(self)
 
@@ -31,7 +47,9 @@ final class ClusterListener extends Actor with ActorLogging {
   private def printStatus(): Unit = {
     val nodeStatuses = nodes.foldLeft(List.empty[String]) { case (b, (k, v)) => f"$k%5s:$v%11s" :: b }
     val prefix = leader.getOrElse("     ")
-    println(f"$thisHost%5s|" + prefix + "|" + nodeStatuses.reverse.mkString("|"))
+    val msg = f"$thisHost%5s|" + prefix + "|" + nodeStatuses.reverse.mkString("|") + "\n"
+//    println(msg)
+    eventsRef ! msg
   }
 
 
