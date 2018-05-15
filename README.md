@@ -1,4 +1,12 @@
 
+Cluster Demo with Docker
+========================
+
+This is a Akka demo application and cluster configuration intended to help understand how Akka clustering works in practice.
+
+It uses Docker to simulate cluster nodes and uses iptables to simulate network partitioning. Some other failure simulations can also be achieved by killing/pausing/stopping individual docker containers.
+
+Each aample application logs its cluster status events into a file to the mounted folder `cluster/events`.
 
 1. Build application
 
@@ -22,6 +30,7 @@ cd cluster
 # Run cluster nodes
 
 ./up config/sbr-keep-majority.conf
+./up config/sbr-keep-oldest.conf
 
 # Shutdown cluster nodes
 
