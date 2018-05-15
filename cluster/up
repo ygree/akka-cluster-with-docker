@@ -1,6 +1,13 @@
 #!/bin/sh
 
-rm evts/*
+if [ "$#" -ne 1 ]; then
+  echo "Illegal number of parameters. Passed: $#.\nExpected one params: <application.configs.folder>."
+  exit
+fi
+
+SRC_CONF=$( echo $1 | sed -e "s/^configs\///" )
+
+ln -fs $SRC_CONF configs/application.conf
 
 docker build . -t akka-cluster-demo:demo
 

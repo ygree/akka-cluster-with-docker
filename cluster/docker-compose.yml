@@ -8,29 +8,34 @@ services:
     hostname: node-1
     privileged: true
     volumes:
-      - ./evts:/evts
+      - ./events:/events
+      - ./configs:/configs
   node-2:
     image: akka-cluster-demo:demo
     hostname: node-2
     privileged: true
     volumes:
-      - ./evts:/evts
+      - ./events:/events
+      - ./configs:/configs
   node-3:
     image: akka-cluster-demo:demo
     hostname: node-3
     privileged: true
     volumes:
-      - ./evts:/evts
+      - ./events:/events
+      - ./configs:/configs
   node-4:
     image: akka-cluster-demo:demo
     hostname: node-4
     privileged: true
     volumes:
-      - ./evts:/evts
+      - ./events:/events
+      - ./configs:/configs
   node-5:
     image: akka-cluster-demo:demo
     hostname: node-5
     privileged: true
     volumes:
-      - ./evts:/evts
+      - ./events:/events
+      - ./configs:/configs
 

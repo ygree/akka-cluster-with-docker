@@ -26,7 +26,7 @@ mainClass in Compile := Some("simple.App")
 dockerBaseImage := "openjdk:alpine"
 
 javaOptions in Universal ++= Seq(
-  "-Dconfig.file=/opt/docker/app.conf"
+  "-Dconfig.file=/configs/application.conf"
 )
 
 enablePlugins(AshScriptPlugin)

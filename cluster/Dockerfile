@@ -1,6 +1,6 @@
-FROM akka-cluster-demo:1.0
+ARG app_conf
 
-COPY app.conf /opt/docker
+FROM akka-cluster-demo:1.0
 
 USER root
 
@@ -20,9 +20,9 @@ RUN apk update && \
 RUN echo "daemon ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/default;  \
     chmod 0440 /etc/sudoers.d/default
 
-RUN mkdir /evts
-RUN chown daemon:daemon /evts
-VOLUME [ "/evts" ]
+# RUN mkdir /evts
+# RUN chown daemon:daemon /evts
+VOLUME [ "/events", "/configs" ]
 
 USER daemon
 

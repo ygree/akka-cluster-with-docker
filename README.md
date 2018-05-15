@@ -21,7 +21,7 @@ cd cluster
 
 # Run cluster nodes
 
-./up
+./up config/sbr-keep-majority.conf
 
 # Shutdown cluster nodes
 
