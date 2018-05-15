@@ -46,3 +46,14 @@ cd cluster
 # Emulate network partitioning (1 2) (3 4 5)
 
 ./connectivity-12-345 off
+
+# Pause/unpause/restart indiviual node 4
+
+docker-compose pause node-4
+docker-compose unpause node-4
+docker-compose stop node-4
+docker-compose start node-4
+docker-compose restart node-4
+
+
+
