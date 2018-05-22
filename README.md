@@ -4,9 +4,9 @@ Cluster Demo with Docker
 
 This is a Akka demo application and cluster configuration intended to help understand how Akka clustering works in practice.
 
-It uses Docker to simulate cluster nodes and uses iptables to simulate network partitioning. Some other failure simulations can also be achieved by killing/pausing/stopping individual docker containers.
+It uses Docker to run cluster nodes and iptables to simulate network partitions. Some other failure simulations can also be achieved by killing/pausing/stopping individual docker containers.
 
-Each aample application logs its cluster status events into a file to the mounted folder `cluster/events`.
+Each sample application logs its cluster status events into a file to the mounted folder `cluster/events`.
 
 1. Build application
 
@@ -20,8 +20,9 @@ cd akka-apps
 ```
 cd cluster
 
-./up
+./up <config file>
 ```
+e.g. `./up configs/sbr-keep-majority.conf`
 
 # Cluster topology
 
@@ -66,5 +67,11 @@ docker-compose restart node-4
 
 # Akka Management HTTP endpoint
 
-docker-compose exec node-1 curl node-2:8558/cluster/members
+`docker-compose exec node-1 curl node-2:8558/cluster/members`
+
+or
+
+`curl localhost:8558/node-2/cluster/members`
+
+in the latest case `control-node` provides proxy access by Nginx to each node Akka Management HTTP endpoint. See `cluster/control-node` for details.
 
