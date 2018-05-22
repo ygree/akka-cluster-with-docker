@@ -3,37 +3,47 @@
 version: '3'
 
 services:
+  monitor-node:
+    hostname: control
+    build: ./control-node
+    ports:
+      - 8558:8558
   node-1:
-    image: akka-cluster-demo:demo
     hostname: node-1
+    build:
+      context: ./akka-node
     privileged: true
     volumes:
       - ./events:/events
       - ./configs:/configs
   node-2:
-    image: akka-cluster-demo:demo
     hostname: node-2
+    build:
+      context: ./akka-node
     privileged: true
     volumes:
       - ./events:/events
       - ./configs:/configs
   node-3:
-    image: akka-cluster-demo:demo
     hostname: node-3
+    build:
+      context: ./akka-node
     privileged: true
     volumes:
       - ./events:/events
       - ./configs:/configs
   node-4:
-    image: akka-cluster-demo:demo
     hostname: node-4
+    build:
+      context: ./akka-node
     privileged: true
     volumes:
       - ./events:/events
       - ./configs:/configs
   node-5:
-    image: akka-cluster-demo:demo
     hostname: node-5
+    build:
+      context: ./akka-node
     privileged: true
     volumes:
       - ./events:/events

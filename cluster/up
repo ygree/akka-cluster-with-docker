@@ -9,7 +9,7 @@ SRC_CONF=$( echo $1 | sed -e "s/^configs\///" )
 
 ln -fs $SRC_CONF configs/application.conf
 
-docker build . -t akka-cluster-demo:demo
+docker-compose build
 
 docker-compose up
 
