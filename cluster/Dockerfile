@@ -6,6 +6,7 @@ USER root
 
 RUN apk update && \
     apk add sudo && \
+    apk add curl && \
     apk add iptables && \
     # adduser -u 1000 -G wheel -D alpine && \
     rm -rf /var/cache/apk/*
@@ -25,6 +26,5 @@ RUN echo "daemon ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/default;  \
 VOLUME [ "/events", "/configs" ]
 
 USER daemon
-
 
 

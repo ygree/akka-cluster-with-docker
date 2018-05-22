@@ -64,5 +64,7 @@ docker-compose stop node-4
 docker-compose start node-4
 docker-compose restart node-4
 
+# Akka Management HTTP endpoint
 
+docker-compose exec node-1 curl node-2:8558/cluster/members
 
