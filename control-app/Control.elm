@@ -89,13 +89,6 @@ viewNodes nodes =
     sortedAllNodes : List NodeAddress
     sortedAllNodes = List.sort <| Set.toList <| allNodes
 
-    drawHeaderRow : List (Html Msg)
-    drawHeaderRow = List.map (\nodeId -> td [] [ text <| nodeHostname nodeId ]) sortedAllNodes
-
-    memberStatus : ClusterMember -> String
-    memberStatus cm = toString cm.status
-
-
     maybeClusterMembers : NodeUrl -> Maybe ClusterMembers
     maybeClusterMembers source = Dict.get source nodes
 
@@ -107,22 +100,32 @@ viewNodes nodes =
     maybeUnreachable node cm = List.head <| List.map (\_ -> "x")
                                          <| List.filter (\m -> m.node == node) cm.unreachable
 
-
-    nodeStatus : NodeUrl -> NodeAddress -> Maybe String
-    nodeStatus source node = maybeClusterMembers source
-        |> Maybe.andThen (\cm -> firstJust (maybeUnreachable node cm) (maybeMemberStatus node cm))
-
-    drawStatus : NodeUrl -> NodeAddress -> Html Msg
-    drawStatus source node = td [] [ text <| withDefault "" <| nodeStatus source node ]
-
     sourceNode : NodeUrl -> Maybe NodeAddress
     sourceNode source = Maybe.map (.selfNode) (maybeClusterMembers source)
 
     sourceHostname : NodeUrl -> String
     sourceHostname source = withDefault source <| Maybe.map nodeHostname (sourceNode source)
 
+    nodeStatus : NodeUrl -> NodeAddress -> Maybe String
+    nodeStatus source node = maybeClusterMembers source
+        |> Maybe.andThen (\cm -> firstJust (maybeUnreachable node cm) (maybeMemberStatus node cm))
+
+    drawHeaderRow : List (Html Msg)
+    drawHeaderRow = List.map (\nodeId -> td [] [ text <| nodeHostname nodeId ]) sortedAllNodes
+
+    drawNodeCell : NodeUrl -> NodeAddress -> Html Msg
+    drawNodeCell source node =
+      let
+        leaderLabel : Maybe String
+        leaderLabel = Maybe.andThen (\cm -> if cm.leader == node then Just "Leader" else Nothing) (maybeClusterMembers source)
+      in
+      td []
+        [ div [] [ text <| withDefault "" <| nodeStatus source node ]
+        , div [] <| withDefault [] <| Maybe.map (\label -> [ text label ]) leaderLabel
+        ]
+
     drawNodeRow : NodeUrl -> Html Msg
-    drawNodeRow source = tr [] <| td [ title source ] [ text <| sourceHostname source ] :: List.map (drawStatus source) sortedAllNodes
+    drawNodeRow source = tr [] <| td [ title source ] [ text <| sourceHostname source ] :: List.map (drawNodeCell source) sortedAllNodes
   in
   table []
     [
