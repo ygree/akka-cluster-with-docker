@@ -42,8 +42,6 @@ update msg model =
   case msg of
     Fetch -> 
       (model, Cmd.batch <| List.map getClusterMembers sourceUrls)
---      (model, withDefault Cmd.none <| List.head <| List.map getClusterMembers sourceUrls)
---      (model, getClusterMembers ("http://localhost:8558/node-" ++ toString 1 ++ "/cluster/members"))
 
     ClusterMembersResp nodeUrl (Ok result) ->
       ({ model | nodes = Dict.insert nodeUrl result model.nodes }, Cmd.none)
