@@ -34,8 +34,10 @@ model = { nodes = Dict.empty }
 
 -- UPDATE
 
+type alias NodeUrl = String
+
 type Msg = Fetch
-         | ClusterMembersResp (Result Http.Error ClusterMembers)
+         | ClusterMembersResp NodeUrl (Result Http.Error ClusterMembers)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -45,17 +47,18 @@ update msg model =
 --      (model, withDefault Cmd.none <| List.head <| List.map getClusterMembers sourceUrls)
 --      (model, getClusterMembers ("http://localhost:8558/node-" ++ toString 1 ++ "/cluster/members"))
 
-    ClusterMembersResp (Ok result) ->
-      ({ nodes = Dict.insert result.selfNode result model.nodes }, Cmd.none)
+    ClusterMembersResp nodeUrl (Ok result) ->
+      ({ model | nodes = Dict.insert nodeUrl result model.nodes }, Cmd.none)
 
-    ClusterMembersResp (Err err) ->
-      (model, Cmd.none)
+    ClusterMembersResp nodeUrl (Err err) ->
+      ({ model | nodes = Dict.remove nodeUrl model.nodes }, Cmd.none)
 
-sourceUrls : List String
+sourceUrls : List NodeUrl
 sourceUrls = List.map (\n -> "http://localhost:8558/node-" ++ toString n ++ "/cluster/members") [1,2,3,4,5]
 
-getClusterMembers : String -> Cmd Msg
-getClusterMembers url = Http.send ClusterMembersResp <| Http.get url decodeMembers -- TODO Result.mapError remove entry if error response
+getClusterMembers : NodeUrl -> Cmd Msg
+getClusterMembers nodeUrl = Http.send (ClusterMembersResp nodeUrl)
+                                      (Http.get nodeUrl decodeMembers)
 
 -- VIEW
 
