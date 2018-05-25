@@ -9,7 +9,7 @@ import Regex exposing (HowMany(AtMost), regex, split)
 import Set exposing (Set)
 import Svg exposing (circle, rect, svg)
 import Svg.Attributes exposing (..)
-import Time exposing (every, second)
+import Time exposing (Time, every, second)
 
 main =
   Html.program { init = (model, Cmd.none)
@@ -20,17 +20,15 @@ main =
 
 -- MODEL
 
-type alias ClusterManageUrl = String
-
-type alias Nodes = Dict NodeAddress ClusterMembers
+type alias Nodes = Dict NodeUrl ClusterMembers
 
 type alias Model = 
   { nodes : Nodes
   }
 
 model : Model
-model = { nodes = Dict.empty }
-
+model = { nodes = Dict.empty
+        }
 
 -- UPDATE
 
@@ -78,7 +76,7 @@ nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMos
 viewNodes : Nodes -> Html Msg
 viewNodes nodes =
   let
-    sourceNodes : List NodeAddress
+    sourceNodes : List NodeUrl
     sourceNodes = List.sort <| Dict.keys nodes
 
     knownMembers : List ClusterMembers
@@ -100,8 +98,8 @@ viewNodes nodes =
     memberStatus cm = toString cm.status
 
 
-    maybeClusterMembers : NodeAddress -> NodeAddress -> Maybe ClusterMembers
-    maybeClusterMembers source node = Dict.get source nodes
+    maybeClusterMembers : NodeUrl -> Maybe ClusterMembers
+    maybeClusterMembers source = Dict.get source nodes
 
     maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
     maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)
@@ -112,15 +110,21 @@ viewNodes nodes =
                                          <| List.filter (\m -> m.node == node) cm.unreachable
 
 
-    nodeStatus : NodeAddress -> NodeAddress -> Maybe String
-    nodeStatus source node = Dict.get source nodes
+    nodeStatus : NodeUrl -> NodeAddress -> Maybe String
+    nodeStatus source node = maybeClusterMembers source
         |> Maybe.andThen (\cm -> firstJust (maybeUnreachable node cm) (maybeMemberStatus node cm))
 
-    drawStatus : NodeAddress -> NodeAddress -> Html Msg
+    drawStatus : NodeUrl -> NodeAddress -> Html Msg
     drawStatus source node = td [] [ text <| withDefault "" <| nodeStatus source node ]
 
-    drawNodeRow : NodeAddress -> Html Msg
-    drawNodeRow source = tr [] <| td [] [ text <| nodeHostname source ] :: List.map (drawStatus source) sortedAllNodes
+    sourceNode : NodeUrl -> Maybe NodeAddress
+    sourceNode source = Maybe.map (.selfNode) (maybeClusterMembers source)
+
+    sourceHostname : NodeUrl -> String
+    sourceHostname source = withDefault source <| Maybe.map nodeHostname (sourceNode source)
+
+    drawNodeRow : NodeUrl -> Html Msg
+    drawNodeRow source = tr [] <| td [] [ text <| sourceHostname source ] :: List.map (drawStatus source) sortedAllNodes
   in
   table []
     [
