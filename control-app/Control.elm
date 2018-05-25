@@ -22,14 +22,14 @@ main =
 
 type alias ClusterManageUrl = String
 
-type alias Nodes2 = Dict NodeAddress ClusterMembers
+type alias Nodes = Dict NodeAddress ClusterMembers
 
 type alias Model = 
-  { nodes2 : Nodes2
+  { nodes : Nodes
   }
 
 model : Model
-model = { nodes2 = Dict.empty }
+model = { nodes = Dict.empty }
 
 
 -- UPDATE
@@ -46,7 +46,7 @@ update msg model =
 --      (model, getClusterMembers ("http://localhost:8558/node-" ++ toString 1 ++ "/cluster/members"))
 
     ClusterMembersResp (Ok result) ->
-      ({ nodes2 = Dict.insert result.selfNode result model.nodes2 }, Cmd.none)
+      ({ nodes = Dict.insert result.selfNode result model.nodes }, Cmd.none)
 
     ClusterMembersResp (Err err) ->
       (model, Cmd.none)
@@ -65,15 +65,15 @@ view model =
     [ div [] [ text "Hello!" ]
     , button [ onClick Fetch ] [ text "Fetch" ]
     -- , div [] [ text (toString model.nodes) ]
-    , viewNodes2 model.nodes2
+    , viewNodes model.nodes
     ]
 
-nodeHostname2 : NodeAddress -> String
-nodeHostname2 node = withDefault node <| List.head <| List.drop 2 <| split (AtMost 3) (regex "[@:]") node
+nodeHostname : NodeAddress -> String
+nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMost 3) (regex "[@:]") node
 
 
-viewNodes2 : Nodes2 -> Html Msg
-viewNodes2 nodes =
+viewNodes : Nodes -> Html Msg
+viewNodes nodes =
   let
     sourceNodes : List NodeAddress
     sourceNodes = List.sort <| Dict.keys nodes
@@ -91,7 +91,7 @@ viewNodes2 nodes =
     sortedAllNodes = List.sort <| Set.toList <| allNodes
 
     drawHeaderRow : List (Html Msg)
-    drawHeaderRow = List.map (\nodeId -> td [] [ text <| nodeHostname2 nodeId ]) sortedAllNodes
+    drawHeaderRow = List.map (\nodeId -> td [] [ text <| nodeHostname nodeId ]) sortedAllNodes
 
     memberStatus : ClusterMember -> String
     memberStatus cm = toString cm.status
@@ -117,7 +117,7 @@ viewNodes2 nodes =
     drawStatus source node = td [] [ text <| withDefault "" <| nodeStatus source node ]
 
     drawNodeRow : NodeAddress -> Html Msg
-    drawNodeRow source = tr [] <| td [] [ text <| nodeHostname2 source ] :: List.map (drawStatus source) sortedAllNodes
+    drawNodeRow source = tr [] <| td [] [ text <| nodeHostname source ] :: List.map (drawStatus source) sortedAllNodes
   in
   table []
     [
