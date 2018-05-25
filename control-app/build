@@ -1,0 +1,3 @@
+#!/bin/sh
+
+elm-make Control.elm --output=../cluster/control-node/content/index.html

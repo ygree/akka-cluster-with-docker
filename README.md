@@ -73,5 +73,7 @@ or
 
 `curl localhost:8558/node-2/cluster/members`
 
+> See `https://developer.lightbend.com/docs/akka-management/current/cluster-http-management.html` for more information.
+
 in the latest case `control-node` provides proxy access by Nginx to each node Akka Management HTTP endpoint. See `cluster/control-node` for details.
 
