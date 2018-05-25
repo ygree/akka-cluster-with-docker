@@ -9,12 +9,13 @@ import Regex exposing (HowMany(AtMost), regex, split)
 import Set exposing (Set)
 import Svg exposing (circle, rect, svg)
 import Svg.Attributes exposing (..)
+import Time exposing (every, second)
 
 main =
   Html.program { init = (model, Cmd.none)
                , view = view
                , update = update
-               , subscriptions = \_ -> Sub.none 
+               , subscriptions = \_ -> every second <| \_ -> Fetch
                }
 
 -- MODEL
@@ -54,7 +55,7 @@ sourceUrls : List String
 sourceUrls = List.map (\n -> "http://localhost:8558/node-" ++ toString n ++ "/cluster/members") [1,2,3,4,5]
 
 getClusterMembers : String -> Cmd Msg
-getClusterMembers url = Http.send ClusterMembersResp <| Http.get url decodeMembers
+getClusterMembers url = Http.send ClusterMembersResp <| Http.get url decodeMembers -- TODO Result.mapError remove entry if error response
 
 -- VIEW
 
