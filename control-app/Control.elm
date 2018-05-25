@@ -77,7 +77,7 @@ viewNodes : Nodes -> Html Msg
 viewNodes nodes =
   let
     sourceNodes : List NodeUrl
-    sourceNodes = List.sort <| Dict.keys nodes
+    sourceNodes = List.sortBy sourceHostname <| Dict.keys nodes
 
     knownMembers : List ClusterMembers
     knownMembers = Dict.values nodes
@@ -124,7 +124,7 @@ viewNodes nodes =
     sourceHostname source = withDefault source <| Maybe.map nodeHostname (sourceNode source)
 
     drawNodeRow : NodeUrl -> Html Msg
-    drawNodeRow source = tr [] <| td [] [ text <| sourceHostname source ] :: List.map (drawStatus source) sortedAllNodes
+    drawNodeRow source = tr [] <| td [ title source ] [ text <| sourceHostname source ] :: List.map (drawStatus source) sortedAllNodes
   in
   table []
     [
