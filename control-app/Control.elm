@@ -117,11 +117,16 @@ viewNodes nodes =
     drawNodeCell source node =
       let
         leaderLabel : Maybe String
-        leaderLabel = Maybe.andThen (\cm -> if cm.leader == node then Just "Leader" else Nothing) (maybeClusterMembers source)
+        leaderLabel = Maybe.andThen (\cm -> if cm.leader == node then Just "leader" else Nothing) (maybeClusterMembers source)
+
+        oldestLabel : Maybe String
+        oldestLabel = Maybe.andThen (\cm -> if cm.oldest == node then Just "oldest" else Nothing) (maybeClusterMembers source)
+
+        labels = foldr (++) "" <| intersperse " | " <| maybeToList leaderLabel ++ maybeToList oldestLabel
       in
       td []
         [ div [] [ text <| withDefault "" <| nodeStatus source node ]
-        , div [] <| withDefault [] <| Maybe.map (\label -> [ text label ]) leaderLabel
+        , div [] [ text labels ]
         ]
 
     drawNodeRow : NodeUrl -> Html Msg
@@ -138,4 +143,7 @@ firstJust : Maybe a -> Maybe a -> Maybe a
 firstJust x y = case x of
                Nothing -> y
                otherwise -> x
+
+maybeToList : Maybe a -> List a
+maybeToList m = withDefault [] <| Maybe.map (\x -> [x]) m
 

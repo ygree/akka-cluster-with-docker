@@ -21,7 +21,7 @@ type alias ClusterMembers =
   , members : List ClusterMember
   , unreachable : List ClusterUnreachableMember
   , leader : NodeAddress
-  -- oldest : NodeAddress
+  , oldest : NodeAddress
   }
 
 type alias ClusterUnreachableMember =
@@ -77,5 +77,5 @@ decodeMembers =
     |> required "members" (list member)
     |> required "unreachable" (list unreachable)
     |> required "leader" node
-    -- oldest
+    |> required "oldest" node
 
