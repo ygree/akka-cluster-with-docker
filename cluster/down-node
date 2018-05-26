@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ "$#" -ne 2 ]; then
+  echo "Illegal number of parameters. Passed: $#.\nExpected two params: <command-receiver-node-number> <leaving-node-number>."
+  exit
+fi
+
+docker-compose exec node-$1 curl -X PUT -d operation=Down http://node-$1:8558/cluster/members/ClusterSystem@node-$2:2552
