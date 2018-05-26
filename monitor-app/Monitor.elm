@@ -1,5 +1,10 @@
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, table, tbody, td, text, thead, tr)
+
+import Html exposing (..)
+import Bootstrap.CDN as CDN
+import Bootstrap.Grid as Grid
+import Bootstrap.Table as Table
+
 import Html.Events exposing (onClick)
 import Http exposing (..)
 import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, NodeAddress, decodeMembers)
@@ -15,7 +20,7 @@ main =
   Html.program { init = (model, Cmd.none)
                , view = view
                , update = update
-               , subscriptions = \_ -> every second <| \_ -> Fetch
+               , subscriptions = \_ -> Sub.none -- every second <| \_ -> Fetch
                }
 
 -- MODEL
@@ -60,12 +65,17 @@ getClusterMembers nodeUrl = Http.send (ClusterMembersResp nodeUrl)
 
 view : Model -> Html Msg
 view model =
-  div []
-    [ div [] [ text "Hello!" ]
-    , button [ onClick Fetch ] [ text "Fetch" ]
-    -- , div [] [ text (toString model.nodes) ]
-    , viewNodes model.nodes
+  Grid.container []
+    [ CDN.stylesheet -- creates an inline style node with the Bootstrap CSS
+    , Grid.row []
+        [ Grid.col []
+          [ button [ onClick Fetch ] [ text "Fetch" ]
+          -- , div [] [ text (toString model.nodes) ]
+          , viewNodes model.nodes
+          ]
+        ]
     ]
+
 
 nodeHostname : NodeAddress -> String
 nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMost 3) (regex "[@:]") node
@@ -110,10 +120,7 @@ viewNodes nodes =
     nodeStatus source node = maybeClusterMembers source
         |> Maybe.andThen (\cm -> firstJust (maybeUnreachable node cm) (maybeMemberStatus node cm))
 
-    drawHeaderRow : List (Html Msg)
-    drawHeaderRow = List.map (\nodeId -> td [] [ text <| nodeHostname nodeId ]) sortedAllNodes
-
-    drawNodeCell : NodeUrl -> NodeAddress -> Html Msg
+    drawNodeCell : NodeUrl -> NodeAddress -> Table.Cell Msg
     drawNodeCell source node =
       let
         leaderLabel : Maybe String
@@ -124,19 +131,22 @@ viewNodes nodes =
 
         labels = foldr (++) "" <| intersperse " | " <| maybeToList leaderLabel ++ maybeToList oldestLabel
       in
-      td []
+      Table.td []
         [ div [] [ text <| withDefault "" <| nodeStatus source node ]
         , div [] [ text labels ]
         ]
 
-    drawNodeRow : NodeUrl -> Html Msg
-    drawNodeRow source = tr [] <| td [ title source ] [ text <| sourceHostname source ] :: List.map (drawNodeCell source) sortedAllNodes
+    nodeTableHeaders : List (Html Msg)
+    nodeTableHeaders = List.map (\nodeId -> text <| nodeHostname nodeId) sortedAllNodes
+
+    drawNodeRow : NodeUrl -> Table.Row Msg
+    drawNodeRow source = Table.tr [] <| Table.td [ Table.cellAttr <| title source ] [ text <| sourceHostname source ] :: List.map (drawNodeCell source) sortedAllNodes
   in
-  table []
-    [
-      thead [] [ tr [] (td [] [ text "source" ] :: drawHeaderRow) ]
-    , tbody [] (List.map drawNodeRow sourceNodes)
-    ]
+  Table.simpleTable
+    ( Table.simpleThead <|
+        List.map (\v -> Table.th [] [v]) (text "source" :: nodeTableHeaders)
+    , Table.tbody [] (List.map drawNodeRow sourceNodes)
+    )
 
 
 firstJust : Maybe a -> Maybe a -> Maybe a
