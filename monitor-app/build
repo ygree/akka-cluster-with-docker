@@ -1,0 +1,3 @@
+#!/bin/sh
+
+elm-make Monitor.elm --output=../cluster/monitor-node/content/index.html

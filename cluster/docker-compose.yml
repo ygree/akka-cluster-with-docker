@@ -4,8 +4,8 @@ version: '3'
 
 services:
   monitor-node:
-    hostname: control
-    build: ./control-node
+    hostname: monitor
+    build: ./monitor-node
     ports:
       - 8558:8558
   node-1:
