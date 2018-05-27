@@ -1,5 +1,3 @@
-import Dict exposing (Dict)
-
 import Html exposing (..)
 import Bootstrap.CDN as CDN
 import Bootstrap.Grid as Grid
@@ -39,7 +37,7 @@ type alias Model =
   }
 
 model : Model
-model = { nodes = Dict.empty
+model = { nodes = Nodes.empty
         }
 
 -- UPDATE
@@ -89,13 +87,11 @@ viewNodes nodes =
       let
         sourceNodes = Nodes.maybeClusterMembers nodes source
 
-        leaderLabel : Maybe String
-        leaderLabel = Maybe.andThen (\cm -> if cm.leader == node then Just "leader" else Nothing) sourceNodes
+        leaderLabel = if Nodes.isLeader nodes source node then ["leader"] else []
 
-        oldestLabel : Maybe String
-        oldestLabel = Maybe.andThen (\cm -> if cm.oldest == node then Just "oldest" else Nothing) sourceNodes
+        oldestLabel = if Nodes.isOldest nodes source node then ["oldest"] else []
 
-        labels = foldr (++) "" <| intersperse " | " <| maybeToList leaderLabel ++ maybeToList oldestLabel
+        labels = foldr (++) "" <| intersperse " | " <| leaderLabel ++ oldestLabel
       in
       Table.td []
         [ div [] [ text <| withDefault "" <| Nodes.nodeStatus nodes source node ]
@@ -113,7 +109,4 @@ viewNodes nodes =
     , thead = Table.simpleThead <| List.map (\v -> Table.th [] [v]) (text "source" :: nodeTableHeaders)
     , tbody = Table.tbody [] (List.map drawNodeRow <| Nodes.sourceNodes nodes)
     }
-
-maybeToList : Maybe a -> List a
-maybeToList m = withDefault [] <| Maybe.map (\x -> [x]) m
 

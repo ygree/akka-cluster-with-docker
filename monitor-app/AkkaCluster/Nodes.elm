@@ -1,5 +1,6 @@
 module AkkaCluster.Nodes exposing
   ( Nodes
+  , empty
   , NodeUrl
   , insertClusterMembers
   , removeClusterMembers
@@ -9,6 +10,8 @@ module AkkaCluster.Nodes exposing
   , sortedAllNodes
   , nodeStatus
   , maybeClusterMembers
+  , isLeader
+  , isOldest
   )
 
 import Dict exposing (Dict)
@@ -18,6 +21,9 @@ import Regex exposing (HowMany(AtMost), regex, split)
 import Set exposing (Set)
 
 type alias Nodes = Dict NodeUrl ClusterMembers
+
+empty : Nodes
+empty = Dict.empty
 
 type alias NodeUrl = String
 
@@ -46,6 +52,12 @@ allNodes nodes = Set.fromList <| List.concatMap memberNodes <| knownMembers node
 sortedAllNodes : Nodes -> List NodeAddress
 sortedAllNodes nodes = List.sort <| Set.toList <| allNodes nodes
 
+isLeader : Nodes -> NodeUrl -> NodeAddress -> Bool
+isLeader nodes source node = withDefault False <| Maybe.map (\v -> v.leader == node) (maybeClusterMembers nodes source)
+
+isOldest : Nodes -> NodeUrl -> NodeAddress -> Bool
+isOldest nodes source node = withDefault False <| Maybe.map (\v -> v.oldest == node) (maybeClusterMembers nodes source)
+
 maybeClusterMembers : Nodes -> NodeUrl -> Maybe ClusterMembers
 maybeClusterMembers nodes source = Dict.get source nodes
 
@@ -57,9 +69,6 @@ maybeUnreachable : NodeAddress -> ClusterMembers -> Maybe String
 maybeUnreachable node cm = List.head <| List.map (\_ -> "x")
                                      <| List.filter (\m -> m.node == node) cm.unreachable
 
-sourceNode : Nodes -> NodeUrl -> Maybe NodeAddress
-sourceNode nodes source = Maybe.map (.selfNode) (maybeClusterMembers nodes source)
-
 sourceHostname : Nodes -> NodeUrl -> String
 sourceHostname nodes source = withDefault source <| Maybe.map nodeHostname (sourceNode nodes source)
 
@@ -67,6 +76,10 @@ nodeStatus : Nodes -> NodeUrl -> NodeAddress -> Maybe String
 nodeStatus nodes source node = maybeClusterMembers nodes source
     |> Maybe.andThen (\cm -> firstJust (maybeUnreachable node cm) (maybeMemberStatus node cm))
 
+------------------------------------------------------------------------------------------------------------------------
+
+sourceNode : Nodes -> NodeUrl -> Maybe NodeAddress
+sourceNode nodes source = Maybe.map (.selfNode) (maybeClusterMembers nodes source)
 
 firstJust : Maybe a -> Maybe a -> Maybe a
 firstJust x y = case x of
