@@ -16,6 +16,14 @@ import Set exposing (Set)
 import Svg exposing (circle, rect, svg)
 import Svg.Attributes exposing (..)
 import Time exposing (Time, every, second)
+import AnimationFrame
+import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
+import Html
+import Svg
+import Svg.Attributes as Attr exposing (..)
+import Time exposing (Time)
+import Visualization.Force as Force exposing (State)
+import AkkaCluster.Nodes as Nodes exposing (Nodes, NodeUrl)
 
 main =
   Html.program { init = (model, Cmd.none)
@@ -26,9 +34,7 @@ main =
 
 -- MODEL
 
-type alias Nodes = Dict NodeUrl ClusterMembers
-
-type alias Model = 
+type alias Model =
   { nodes : Nodes
   }
 
@@ -37,8 +43,6 @@ model = { nodes = Dict.empty
         }
 
 -- UPDATE
-
-type alias NodeUrl = String
 
 type Msg = Fetch
          | ClusterMembersResp NodeUrl (Result Http.Error ClusterMembers)
@@ -50,10 +54,10 @@ update msg model =
       (model, Cmd.batch <| List.map getClusterMembers sourceUrls)
 
     ClusterMembersResp nodeUrl (Ok result) ->
-      ({ model | nodes = Dict.insert nodeUrl result model.nodes }, Cmd.none)
+      ({ model | nodes = Nodes.insertClusterMembers model.nodes nodeUrl result }, Cmd.none)
 
     ClusterMembersResp nodeUrl (Err err) ->
-      ({ model | nodes = Dict.remove nodeUrl model.nodes }, Cmd.none)
+      ({ model | nodes = Nodes.removeClusterMembers model.nodes nodeUrl }, Cmd.none)
 
 sourceUrls : List NodeUrl
 sourceUrls = List.map (\n -> "http://localhost:8558/node-" ++ toString n ++ "/cluster/members") [1,2,3,4,5]
@@ -77,84 +81,38 @@ view model =
         ]
     ]
 
-
-nodeHostname : NodeAddress -> String
-nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMost 3) (regex "[@:]") node
-
-
 viewNodes : Nodes -> Html Msg
 viewNodes nodes =
   let
-    sourceNodes : List NodeUrl
-    sourceNodes = List.sortBy sourceHostname <| Dict.keys nodes
-
-    knownMembers : List ClusterMembers
-    knownMembers = Dict.values nodes
-
-    memberNodes : ClusterMembers -> List NodeAddress
-    memberNodes cm = List.map .node cm.members ++ List.map .node cm.unreachable
-
-    allNodes : Set NodeAddress
-    allNodes = Set.fromList <| List.concatMap memberNodes knownMembers
-
-    sortedAllNodes : List NodeAddress
-    sortedAllNodes = List.sort <| Set.toList <| allNodes
-
-    maybeClusterMembers : NodeUrl -> Maybe ClusterMembers
-    maybeClusterMembers source = Dict.get source nodes
-
-    maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
-    maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)
-                                          <| List.filter (\m -> m.node == node) cm.members
-
-    maybeUnreachable : NodeAddress -> ClusterMembers -> Maybe String
-    maybeUnreachable node cm = List.head <| List.map (\_ -> "x")
-                                         <| List.filter (\m -> m.node == node) cm.unreachable
-
-    sourceNode : NodeUrl -> Maybe NodeAddress
-    sourceNode source = Maybe.map (.selfNode) (maybeClusterMembers source)
-
-    sourceHostname : NodeUrl -> String
-    sourceHostname source = withDefault source <| Maybe.map nodeHostname (sourceNode source)
-
-    nodeStatus : NodeUrl -> NodeAddress -> Maybe String
-    nodeStatus source node = maybeClusterMembers source
-        |> Maybe.andThen (\cm -> firstJust (maybeUnreachable node cm) (maybeMemberStatus node cm))
-
     drawNodeCell : NodeUrl -> NodeAddress -> Table.Cell Msg
     drawNodeCell source node =
       let
+        sourceNodes = Nodes.maybeClusterMembers nodes source
+
         leaderLabel : Maybe String
-        leaderLabel = Maybe.andThen (\cm -> if cm.leader == node then Just "leader" else Nothing) (maybeClusterMembers source)
+        leaderLabel = Maybe.andThen (\cm -> if cm.leader == node then Just "leader" else Nothing) sourceNodes
 
         oldestLabel : Maybe String
-        oldestLabel = Maybe.andThen (\cm -> if cm.oldest == node then Just "oldest" else Nothing) (maybeClusterMembers source)
+        oldestLabel = Maybe.andThen (\cm -> if cm.oldest == node then Just "oldest" else Nothing) sourceNodes
 
         labels = foldr (++) "" <| intersperse " | " <| maybeToList leaderLabel ++ maybeToList oldestLabel
       in
       Table.td []
-        [ div [] [ text <| withDefault "" <| nodeStatus source node ]
+        [ div [] [ text <| withDefault "" <| Nodes.nodeStatus nodes source node ]
         , div [] [ text labels ]
         ]
 
     nodeTableHeaders : List (Html Msg)
-    nodeTableHeaders = List.map (\nodeId -> text <| nodeHostname nodeId) sortedAllNodes
+    nodeTableHeaders = List.map (\nodeId -> text <| Nodes.nodeHostname nodeId) <| Nodes.sortedAllNodes nodes
 
     drawNodeRow : NodeUrl -> Table.Row Msg
-    drawNodeRow source = Table.tr [] <| Table.td [ Table.cellAttr <| title source ] [ text <| sourceHostname source ] :: List.map (drawNodeCell source) sortedAllNodes
+    drawNodeRow source = Table.tr [] <| Table.td [ Table.cellAttr <| title source ] [ text <| Nodes.sourceHostname nodes source ] :: List.map (drawNodeCell source) (Nodes.sortedAllNodes nodes)
   in
   Table.table
     { options = [ Table.striped, Table.hover, Table.small, Table.bordered ]
-    , thead = Table.simpleThead <|
-        List.map (\v -> Table.th [] [v]) (text "source" :: nodeTableHeaders)
-    , tbody = Table.tbody [] (List.map drawNodeRow sourceNodes)
+    , thead = Table.simpleThead <| List.map (\v -> Table.th [] [v]) (text "source" :: nodeTableHeaders)
+    , tbody = Table.tbody [] (List.map drawNodeRow <| Nodes.sourceNodes nodes)
     }
-
-
-firstJust : Maybe a -> Maybe a -> Maybe a
-firstJust x y = case x of
-               Nothing -> y
-               otherwise -> x
 
 maybeToList : Maybe a -> List a
 maybeToList m = withDefault [] <| Maybe.map (\x -> [x]) m
