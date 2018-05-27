@@ -4,6 +4,7 @@ import Html exposing (..)
 import Bootstrap.CDN as CDN
 import Bootstrap.Grid as Grid
 import Bootstrap.Table as Table
+import Bootstrap.Button as Button
 
 import Html.Events exposing (onClick)
 import Http exposing (..)
@@ -69,7 +70,7 @@ view model =
     [ CDN.stylesheet -- creates an inline style node with the Bootstrap CSS
     , Grid.row []
         [ Grid.col []
-          [ button [ onClick Fetch ] [ text "Fetch" ]
+          [ Button.button [ Button.primary, Button.onClick Fetch ] [ text "Fetch" ]
           -- , div [] [ text (toString model.nodes) ]
           , viewNodes model.nodes
           ]
@@ -142,11 +143,12 @@ viewNodes nodes =
     drawNodeRow : NodeUrl -> Table.Row Msg
     drawNodeRow source = Table.tr [] <| Table.td [ Table.cellAttr <| title source ] [ text <| sourceHostname source ] :: List.map (drawNodeCell source) sortedAllNodes
   in
-  Table.simpleTable
-    ( Table.simpleThead <|
+  Table.table
+    { options = [ Table.striped, Table.hover, Table.small, Table.bordered ]
+    , thead = Table.simpleThead <|
         List.map (\v -> Table.th [] [v]) (text "source" :: nodeTableHeaders)
-    , Table.tbody [] (List.map drawNodeRow sourceNodes)
-    )
+    , tbody = Table.tbody [] (List.map drawNodeRow sourceNodes)
+    }
 
 
 firstJust : Maybe a -> Maybe a -> Maybe a
