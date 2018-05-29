@@ -4,7 +4,6 @@ module AkkaCluster.Json exposing
   , decodeMembers
   , ClusterMember
   , MemberStatus
---  , membersSet
   )
 
 import Set exposing (..)
@@ -70,9 +69,6 @@ member =
 
 decodeMembers : Decoder ClusterMembers
 decodeMembers =
-  -- Decode.map2 ClusterMembers 
-  --   (Decode.field "selfNode" Decode.string)
-  --   (Decode.field "leader" Decode.string)
   decode ClusterMembers
     |> required "selfNode" node
     |> required "members" (list member)
