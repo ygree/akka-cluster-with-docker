@@ -8,7 +8,6 @@ module AkkaCluster.Nodes exposing
   , sourceNodes
   , sourceHostname
   , sortedAllNodes
-  , maybeClusterMembers
   , nodeInfo
   , NodeStatus (..)
   )
@@ -20,7 +19,11 @@ import Regex exposing (HowMany(AtMost), regex, split)
 import Set exposing (Set)
 import AkkaCluster.Json
 
-type alias Nodes = Dict NodeUrl ClusterMembers
+type alias Nodes = Dict NodeUrl ClusterNode
+
+type alias ClusterNode = { selfNode: NodeAddress
+                         , knownNodes: Dict NodeAddress NodeInfo
+                         }
 
 empty : Nodes
 empty = Dict.empty
@@ -37,7 +40,8 @@ type alias NodeInfo =
   }
 
 insertClusterMembers : Nodes -> NodeUrl -> ClusterMembers -> Nodes
-insertClusterMembers nodes nodeUrl clusterMembers = Dict.insert nodeUrl clusterMembers nodes
+insertClusterMembers nodes nodeUrl clusterMembers =
+  Dict.insert nodeUrl (clusterMembersToClusterNode clusterMembers) nodes
 
 removeClusterMembers : Nodes -> NodeUrl -> Nodes
 removeClusterMembers nodes nodeUrl = Dict.remove nodeUrl nodes
@@ -49,20 +53,8 @@ nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMos
 sourceNodes : Nodes -> List NodeUrl
 sourceNodes nodes = List.sortBy (sourceHostname nodes) (Dict.keys nodes)
 
-knownMembers : Nodes -> List ClusterMembers
-knownMembers nodes = Dict.values nodes
-
-memberNodes : ClusterMembers -> List NodeAddress
-memberNodes cm = List.map .node cm.members ++ List.map .node cm.unreachable
-
-allNodes : Nodes -> Set NodeAddress
-allNodes nodes = Set.fromList <| List.concatMap memberNodes <| knownMembers nodes
-
 sortedAllNodes : Nodes -> List NodeAddress
-sortedAllNodes nodes = List.sort <| Set.toList <| allNodes nodes
-
-maybeClusterMembers : Nodes -> NodeUrl -> Maybe ClusterMembers
-maybeClusterMembers nodes source = Dict.get source nodes
+sortedAllNodes nodes = List.sort <| List.map .selfNode (Dict.values nodes)
 
 maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
 maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)
@@ -72,17 +64,27 @@ sourceHostname : Nodes -> NodeUrl -> String
 sourceHostname nodes source = withDefault source <| Maybe.map nodeHostname (sourceNode nodes source)
 
 nodeInfo : Nodes -> NodeUrl -> NodeAddress -> Maybe NodeInfo
-nodeInfo nodes source node = Maybe.map (nodeInfoFromClusterMembers node) (maybeClusterMembers nodes source)
+nodeInfo nodes source node = nodes |> Dict.get source
+                                   |> Maybe.map .knownNodes
+                                   |> Maybe.andThen (Dict.get node)
 
 ------------------------------------------------------------------------------------------------------------------------
 
 sourceNode : Nodes -> NodeUrl -> Maybe NodeAddress
-sourceNode nodes source = Maybe.map (.selfNode) (maybeClusterMembers nodes source)
+sourceNode nodes source = Maybe.map (.selfNode) (Dict.get source nodes)
 
-firstJust : Maybe a -> Maybe a -> Maybe a
-firstJust x y = case x of
-               Nothing -> y
-               otherwise -> x
+clusterMembersToClusterNode : ClusterMembers -> ClusterNode
+clusterMembersToClusterNode cm =
+  let
+    knownNodeAddresses : List NodeAddress
+    knownNodeAddresses = List.map .node cm.members
+
+    knownNodes : Dict NodeAddress NodeInfo
+    knownNodes = Dict.fromList <| List.map (\node -> (node, nodeInfoFromClusterMembers node cm)) knownNodeAddresses
+  in
+    { selfNode = cm.selfNode
+    , knownNodes = knownNodes
+    }
 
 nodeInfoFromClusterMembers : NodeAddress -> ClusterMembers -> NodeInfo
 nodeInfoFromClusterMembers node members =
