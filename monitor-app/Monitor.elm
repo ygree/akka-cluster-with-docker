@@ -21,7 +21,7 @@ import Svg
 import Svg.Attributes as Attr exposing (..)
 import Time exposing (Time)
 import Visualization.Force as Force exposing (State)
-import AkkaCluster.Nodes as Nodes exposing (Nodes, NodeUrl)
+import AkkaCluster.Nodes as Nodes exposing (NodeUrl, Nodes, nodeInfo)
 
 main =
   Html.program { init = (model, Cmd.none)
@@ -84,19 +84,20 @@ viewNodes nodes =
   let
     drawNodeCell : NodeUrl -> NodeAddress -> Table.Cell Msg
     drawNodeCell source node =
-      let
-        sourceNodes = Nodes.maybeClusterMembers nodes source
-
-        leaderLabel = if Nodes.isLeader nodes source node then ["leader"] else []
-
-        oldestLabel = if Nodes.isOldest nodes source node then ["oldest"] else []
-
-        labels = foldr (++) "" <| intersperse " | " <| leaderLabel ++ oldestLabel
-      in
-      Table.td []
-        [ div [] [ text <| withDefault "" <| Nodes.nodeStatus nodes source node ]
-        , div [] [ text labels ]
-        ]
+        case nodeInfo nodes source node of
+          Nothing -> Table.td [] [ text "N/A" ]
+          Just { status, isLeader, isOldest } ->
+            let
+              leaderLabel = if isLeader then ["leader"] else []
+              oldestLabel = if isOldest then ["oldest"] else []
+              labels = foldr (++) "" <| intersperse " | " <| leaderLabel ++ oldestLabel
+              statusLabel = case status of
+                              Nodes.UnknownNodeStatus -> "???"
+                              Nodes.NodeStatus memberStatus -> toString memberStatus
+            in Table.td []
+                    [ div [] [ text statusLabel ]
+                    , div [] [ text labels ]
+                    ]
 
     nodeTableHeaders : List (Html Msg)
     nodeTableHeaders = List.map (\nodeId -> text <| Nodes.nodeHostname nodeId) <| Nodes.sortedAllNodes nodes
