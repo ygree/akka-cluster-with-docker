@@ -88,7 +88,7 @@ nodeInfoFromClusterMembers : NodeAddress -> ClusterMembers -> NodeInfo
 nodeInfoFromClusterMembers node members =
   let
     isUnreachable : Bool
-    isUnreachable = List.any (\u -> u.node == node) members.unreachable
+    isUnreachable = List.any (\u -> u.node == node && List.member members.selfNode u.observedBy) members.unreachable
 
     nodeStatus : Maybe MemberStatus
     nodeStatus = List.head <| List.map (.status) <| List.filter (\m -> m.node == node) members.members

@@ -26,7 +26,7 @@ type alias ClusterMembers =
 
 type alias ClusterUnreachableMember =
   { node : NodeAddress
-  -- , observedBy : List NodeAddress
+  , observedBy : List NodeAddress
   }
 
 type MemberStatus = Joining | WeaklyUp | Up | Leaving | Exiting | Removed | Down
@@ -60,6 +60,7 @@ unreachable : Decoder ClusterUnreachableMember
 unreachable =
   decode ClusterUnreachableMember
     |> required "node" node
+    |> required "observedBy" (list node)
 
 member : Decoder ClusterMember
 member =
