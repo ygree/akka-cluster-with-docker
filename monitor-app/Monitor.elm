@@ -22,6 +22,7 @@ import Svg.Attributes as Attr exposing (..)
 import Time exposing (Time)
 import Visualization.Force as Force exposing (State)
 import AkkaCluster.Nodes as Nodes exposing (NodeUrl, Nodes, nodeInfo)
+import Json.Decode as Decode
 
 main =
   Html.program { init = (model, Cmd.none)
@@ -62,7 +63,19 @@ sourceUrls = List.map (\n -> "http://localhost:8558/node-" ++ toString n ++ "/cl
 
 getClusterMembers : NodeUrl -> Cmd Msg
 getClusterMembers nodeUrl = Http.send (ClusterMembersResp nodeUrl)
-                                      (Http.get nodeUrl decodeMembers)
+                                      (getClusterMembersReq nodeUrl decodeMembers)
+
+getClusterMembersReq : String -> Decode.Decoder a -> Request a
+getClusterMembersReq url decoder =
+  Http.request
+    { method = "GET"
+    , headers = []
+    , url = url
+    , body = emptyBody
+    , expect = expectJson decoder
+    , timeout = Just <| 2 * second
+    , withCredentials = False
+    }
 
 -- VIEW
 
