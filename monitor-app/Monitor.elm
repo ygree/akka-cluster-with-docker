@@ -160,29 +160,27 @@ viewNodes nodes =
 renderGraph : Graph.GraphNodes -> Svg Msg
 renderGraph graphNodes =
     svg [ width (toString Graph.screenWidth ++ "px"), height (toString Graph.screenHeight ++ "px") ]
-        [ --g [ class "links" ] <| List.map (linkElement model.graph) <| Graph.edges model.graph
-        --,
-          Svg.g [ class "nodes" ] <| List.map nodeElement <| graphNodes.entities
+        [ Svg.g [ class "links" ] <| List.map (linkElement graphNodes) <| Set.toList graphNodes.links
+        , Svg.g [ class "nodes" ] <| List.map nodeElement <| graphNodes.entities
         ]
 
 
-{-linkElement graph edge =
+linkElement : Graph.GraphNodes -> Graph.NodesLink -> Svg a
+linkElement graph edge =
     let
-        source =
-            Maybe.withDefault (Force.entity 0 "") <| Maybe.map (.node >> .label) <| Graph.get edge.from graph
-
-        target =
-            Maybe.withDefault (Force.entity 0 "") <| Maybe.map (.node >> .label) <| Graph.get edge.to graph
-    in
+        source = List.head <| List.filter (\e -> e.id == Tuple.first edge) graph.entities
+        target = List.head <| List.filter (\e -> e.id == Tuple.second edge) graph.entities
+    in withDefault (div [] []) <| Maybe.map2 (\s t ->
         line
             [ strokeWidth "1"
             , stroke "#aaa"
-            , x1 (toString source.x)
-            , y1 (toString source.y)
-            , x2 (toString target.x)
-            , y2 (toString target.y)
+            , x1 (toString s.x)
+            , y1 (toString s.y)
+            , x2 (toString t.x)
+            , y2 (toString t.y)
             ]
-            []-}
+            []
+            ) source target
 
 
 nodeElement node =

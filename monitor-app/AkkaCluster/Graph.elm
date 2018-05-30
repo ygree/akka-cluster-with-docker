@@ -1,5 +1,6 @@
 module AkkaCluster.Graph exposing
   ( GraphNodes
+  , NodesLink
   , emptyGraphNodes
   , updateGraphNodes
   , screenWidth
