@@ -79,7 +79,7 @@ updateGraphNodes { entities, links, simulation } nodes =
     forces =
         [
           Force.links <| Set.toList nodeLinks
-        , Force.manyBody allNodes
+        , Force.manyBodyStrength -80 allNodes
 --        Force.manyBody allNodes
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]

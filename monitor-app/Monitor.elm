@@ -185,7 +185,7 @@ linkElement graph edge =
 
 nodeElement node =
     circle
-        [ r "3.5"
+        [ r "5.5"
         , fill "#0f0ff0"
         , stroke "transparent"
         , strokeWidth "17px"
@@ -193,5 +193,4 @@ nodeElement node =
         , cx (toString node.x)
         , cy (toString node.y)
         ]
-        [ Svg.title [] [ Svg.text <|  node.value ++ "*" ] ]
---        [ Svg.text <|  node.label.value ++ "*" ]
+        [ Svg.title [] [ Svg.text <| Nodes.nodeHostname node.id ] ]
