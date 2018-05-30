@@ -1,3 +1,4 @@
+import AkkaCluster.Graph exposing (GraphNodes)
 import Html exposing (..)
 import Bootstrap.CDN as CDN
 import Bootstrap.Grid as Grid
@@ -10,17 +11,18 @@ import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, NodeAddress, de
 import List exposing (..)
 import Maybe exposing (withDefault)
 import Set exposing (Set)
-import Svg exposing (circle, rect, svg)
+import Svg exposing (Svg, circle, line, rect, svg)
 import Svg.Attributes exposing (..)
 import Time exposing (Time, every, second)
 import AnimationFrame
-import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
+--import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
 import Html
 import Svg
 import Svg.Attributes as Attr exposing (..)
 import Time exposing (Time)
 import Visualization.Force as Force exposing (State)
 import AkkaCluster.Nodes as Nodes exposing (NodeUrl, Nodes, nodeInfo)
+import AkkaCluster.Graph as Graph
 import Json.Decode as Decode
 
 main =
@@ -34,10 +36,12 @@ main =
 
 type alias Model =
   { nodes : Nodes
+  , graph : Graph.GraphNodes
   }
 
 model : Model
 model = { nodes = Nodes.empty
+        , graph = Graph.emptyGraphNodes
         }
 
 -- UPDATE
@@ -52,7 +56,11 @@ update msg model =
       (model, Cmd.batch <| List.map getClusterMembers sourceUrls)
 
     ClusterMembersResp nodeUrl (Ok result) ->
-      ({ model | nodes = Nodes.insertClusterMembers model.nodes nodeUrl result }, Cmd.none)
+      let
+        newNodes = Nodes.insertClusterMembers model.nodes nodeUrl result
+        newGraph = Graph.updateGraphNodes model.graph newNodes
+      in
+        ({ model | nodes = newNodes, graph = newGraph }, Cmd.none)
 
     ClusterMembersResp nodeUrl (Err err) ->
       ({ model | nodes = Nodes.removeClusterMembers model.nodes nodeUrl }, Cmd.none)
@@ -88,6 +96,10 @@ view model =
           -- , div [] [ text (toString model.nodes) ]
           , viewNodes model.nodes
           ]
+        ]
+    , Grid.row []
+        [ Grid.col []
+          [ renderGraph model.graph ]
         ]
     ]
 
@@ -127,3 +139,46 @@ viewNodes nodes =
     , tbody = Table.tbody [] (List.map drawNodeRow <| Nodes.sourceNodes nodes)
     }
 
+---
+
+
+renderGraph : Graph.GraphNodes -> Svg Msg
+renderGraph graphNodes =
+    svg [ width (toString Graph.screenWidth ++ "px"), height (toString Graph.screenHeight ++ "px") ]
+        [ --g [ class "links" ] <| List.map (linkElement model.graph) <| Graph.edges model.graph
+        --,
+          Svg.g [ class "nodes" ] <| List.map nodeElement <| graphNodes.entities
+        ]
+
+
+{-linkElement graph edge =
+    let
+        source =
+            Maybe.withDefault (Force.entity 0 "") <| Maybe.map (.node >> .label) <| Graph.get edge.from graph
+
+        target =
+            Maybe.withDefault (Force.entity 0 "") <| Maybe.map (.node >> .label) <| Graph.get edge.to graph
+    in
+        line
+            [ strokeWidth "1"
+            , stroke "#aaa"
+            , x1 (toString source.x)
+            , y1 (toString source.y)
+            , x2 (toString target.x)
+            , y2 (toString target.y)
+            ]
+            []-}
+
+
+nodeElement node =
+    circle
+        [ r "3.5"
+        , fill "#0f0ff0"
+        , stroke "transparent"
+        , strokeWidth "17px"
+--        , onMouseDown node.id
+        , cx (toString node.x)
+        , cy (toString node.y)
+        ]
+        [ Svg.title [] [ Svg.text <|  node.value ++ "*" ] ]
+--        [ Svg.text <|  node.label.value ++ "*" ]
