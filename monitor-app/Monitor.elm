@@ -190,14 +190,21 @@ nodeElement nodes node =
     color = if node.value.isLeader
             then "#ff99ff"
             else "#99ccff"
+
+    strokeColor = if node.value.isOldest
+                  then "#ffcc00"
+                  else color
   in
-    circle
-        [ r "5.5"
+    svg []
+      [
+      circle
+        [ r "8.5"
         , fill color
-        , stroke "transparent"
-        , strokeWidth "17px"
+        , stroke strokeColor --"transparent"
+        , strokeWidth "3px"
 --        , onMouseDown node.id
         , cx (toString node.x)
         , cy (toString node.y)
         ]
         [ Svg.title [] [ Svg.text <| Nodes.nodeHostname node.id ] ]
+      ]
