@@ -55,11 +55,17 @@ updateGraphNodes { entities, links, simulation } nodes =
     allNodes = Nodes.allNodeInfo nodes
 
     newNodes : Set NodeAddress
-    newNodes = Set.diff
-                   (Set.fromList <| Dict.keys allNodes)
-                   (entities |> List.map .id |> Set.fromList)
+    newNodes = Set.diff (Set.fromList <| Dict.keys allNodes)
+                        (entities |> List.map .id |> Set.fromList)
 
-    startingIndex = List.length entities
+    missingNodes : Set NodeAddress
+    missingNodes = Set.diff (entities |> List.map (\({id}) -> id) |> Set.fromList)
+                            (Set.fromList <| Dict.keys allNodes)
+
+    leftEntities : List Entity
+    leftEntities = entities |> List.filter (\e -> not (Set.member e.id missingNodes))
+
+    startingIndex = List.length leftEntities
 
     newEntities : List Entity
     newEntities = newNodes |> Set.toList
@@ -68,7 +74,7 @@ updateGraphNodes { entities, links, simulation } nodes =
                            |> List.map (\e -> { e | id = Tuple.first e.value, value = Tuple.second e.value })
 
     updatedEntities : List Entity
-    updatedEntities = entities |> List.map (\e -> { e | value = withDefault e.value (Dict.get e.id allNodes) })
+    updatedEntities = leftEntities |> List.map (\e -> { e | value = withDefault e.value (Dict.get e.id allNodes) })
 
     allEntities = List.append updatedEntities newEntities
 
