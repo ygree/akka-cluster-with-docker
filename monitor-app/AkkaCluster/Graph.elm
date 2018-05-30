@@ -8,54 +8,51 @@ import AkkaCluster.Json exposing (NodeAddress)
 import AkkaCluster.Nodes exposing (..)
 import Dict exposing (Dict)
 import Graph exposing (Graph, NodeId)
-import Set
+import Set exposing (Set)
 import Visualization.Force as Force exposing (State)
 
 
 type alias GraphNodes =
-  { nodeMap : NodeMap
---  , graph : Graph Entity ()
-  , simulation : Force.State NodeId
+  { entities : List Entity
+  , links : Set NodesLink
+--  , simulation : Force.State NodeId
   }
 
-type alias NodeMap = Dict NodeAddress NodeId
+type alias Entity = Force.Entity NodeAddress { value : NodeAddress }
 
-type alias Entity =
-  Force.Entity NodeId { value : String }
+type alias NodesLink = (NodeAddress, NodeAddress)
+
+nodeLink : NodeAddress -> NodeAddress -> NodesLink
+nodeLink a b = if a <= b
+               then (a, b)
+               else (b, a)
 
 emptyGraphNodes : GraphNodes
 emptyGraphNodes =
-  { nodeMap = Dict.empty
---  , graph = Graph.empty
-  , simulation = Force.simulation []
+  { entities = []
+  , links = Set.empty
   }
 
 updateGraphNodes : GraphNodes -> Nodes -> GraphNodes
-updateGraphNodes graphNodes nodes =
+updateGraphNodes { entities, links } nodes =
   let
-    newNodeMap = updateNodesMap graphNodes.nodeMap (sortedAllNodes nodes)
---    graph = graphNodes.graph
-    simulation = graphNodes.simulation
+    newNodeMap : Set NodeAddress
+    newNodeMap = Set.diff
+                   (nodes |> allNodes |> Set.fromList)
+                   (entities |> List.map .id |> Set.fromList)
+
+    startingIndex = List.length entities
+
+    newEntities : List Entity
+    newEntities = newNodeMap |> Set.toList
+                             |> List.indexedMap (,)
+                             |> List.map (\(idx, nodeAddr) -> Force.entity (startingIndex + idx) nodeAddr)
+                             |> List.map (\e -> { e | id = e.value })
+
   in
-    { nodeMap = newNodeMap
---    , graph = graph -- TODO: update graph based on the diff of graphNodes.nodeMap and newNodeMap
-    , simulation = simulation -- TODO: update simulation
+    { entities = List.append entities newEntities -- TODO exclude removed nodes
+    , links = links -- TODO links
     }
 
-updateNodesMap : NodeMap -> List NodeAddress -> NodeMap
-updateNodesMap nodeMap nodes =
-  let
-    existingNodes = Dict.keys nodeMap |> Set.fromList
-    maxNodeId = Dict.values nodeMap |> List.maximum |> Maybe.withDefault 0
-    setOfNodes = Set.fromList nodes
-    newNodes = Set.diff setOfNodes existingNodes
 
-    newNodePairs : List (NodeId, NodeAddress)
-    newNodePairs = Tuple.second <|
-      Set.foldr (\nodeAddr (nextId, result) -> (nextId + 1, (nextId, nodeAddr) :: result))
-        (maxNodeId + 1, []) newNodes
-
-    updatedNodeMap = List.foldr (\(nodeId, nodeAddr) nodeMap -> Dict.insert nodeAddr nodeId nodeMap) nodeMap newNodePairs
-  in
-    updatedNodeMap
 

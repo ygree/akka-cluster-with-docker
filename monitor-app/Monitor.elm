@@ -111,11 +111,15 @@ viewNodes nodes =
                     , div [] [ text labels ]
                     ]
 
+    sortedAllNodes = Nodes.allNodes nodes |> List.sort
+
     nodeTableHeaders : List (Html Msg)
-    nodeTableHeaders = List.map (\nodeId -> text <| Nodes.nodeHostname nodeId) <| Nodes.sortedAllNodes nodes
+    nodeTableHeaders = List.map (\nodeId -> text <| Nodes.nodeHostname nodeId) <| sortedAllNodes
+
+    drawNodeSource source = Table.td [ Table.cellAttr <| title source ] [ text <| Nodes.sourceHostname nodes source ]
 
     drawNodeRow : NodeUrl -> Table.Row Msg
-    drawNodeRow source = Table.tr [] <| Table.td [ Table.cellAttr <| title source ] [ text <| Nodes.sourceHostname nodes source ] :: List.map (drawNodeCell source) (Nodes.sortedAllNodes nodes)
+    drawNodeRow source = Table.tr [] <| (drawNodeSource source) :: List.map (drawNodeCell source) sortedAllNodes
   in
   Table.table
     { options = [ Table.striped, Table.hover, Table.small, Table.bordered ]

@@ -7,7 +7,7 @@ module AkkaCluster.Nodes exposing
   , nodeHostname
   , sourceNodes
   , sourceHostname
-  , sortedAllNodes
+  , allNodes
   , nodeInfo
   , NodeStatus (..)
   )
@@ -53,8 +53,8 @@ nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMos
 sourceNodes : Nodes -> List NodeUrl
 sourceNodes nodes = List.sortBy (sourceHostname nodes) (Dict.keys nodes)
 
-sortedAllNodes : Nodes -> List NodeAddress
-sortedAllNodes nodes = List.sort <| List.map .selfNode (Dict.values nodes)
+allNodes : Nodes -> List NodeAddress
+allNodes nodes = List.map .selfNode (Dict.values nodes)
 
 maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
 maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)
