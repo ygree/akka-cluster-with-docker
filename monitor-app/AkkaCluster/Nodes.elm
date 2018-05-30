@@ -2,12 +2,13 @@ module AkkaCluster.Nodes exposing
   ( Nodes
   , empty
   , NodeUrl
+  , NodeInfo
   , insertClusterMembers
   , removeClusterMembers
   , nodeHostname
   , sourceNodes
   , sourceHostname
-  , allNodes
+  , allNodeInfo
   , nodeInfo
   , NodeStatus (..)
   , allLinks
@@ -54,8 +55,10 @@ nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMos
 sourceNodes : Nodes -> List NodeUrl
 sourceNodes nodes = List.sortBy (sourceHostname nodes) (Dict.keys nodes)
 
-allNodes : Nodes -> List NodeAddress
-allNodes nodes = List.map .selfNode (Dict.values nodes)
+allNodeInfo : Nodes -> Dict NodeAddress NodeInfo
+allNodeInfo nodes = (Dict.values nodes) |> List.filterMap (\v -> Maybe.map (\info -> (v.selfNode, info))
+                                                          (Dict.get v.selfNode v.knownNodes))
+                                        |> Dict.fromList
 
 --maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
 --maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)

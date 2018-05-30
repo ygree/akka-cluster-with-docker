@@ -1,5 +1,6 @@
 module AkkaCluster.Graph exposing
   ( GraphNodes
+  , Entity
   , NodesLink
   , emptyGraphNodes
   , updateGraphNodes
@@ -10,7 +11,7 @@ module AkkaCluster.Graph exposing
 import AkkaCluster.Json exposing (NodeAddress)
 import AkkaCluster.Nodes as Nodes exposing (..)
 import Dict exposing (Dict)
---import Graph exposing (Graph, NodeId)
+import Maybe exposing (withDefault)
 import Set exposing (Set)
 import Visualization.Force as Force exposing (State)
 
@@ -31,7 +32,7 @@ type alias GraphNodes =
   , simulation : Force.State NodeAddress
   }
 
-type alias Entity = Force.Entity NodeAddress { value : NodeAddress }
+type alias Entity = Force.Entity NodeAddress { value : NodeInfo }
 
 type alias NodesLink = (NodeAddress, NodeAddress)
 
@@ -50,11 +51,12 @@ emptyGraphNodes =
 updateGraphNodes : GraphNodes -> Nodes -> GraphNodes
 updateGraphNodes { entities, links, simulation } nodes =
   let
-    allNodes = Nodes.allNodes nodes
+    allNodes : Dict NodeAddress Nodes.NodeInfo
+    allNodes = Nodes.allNodeInfo nodes
 
     newNodes : Set NodeAddress
     newNodes = Set.diff
-                   (Set.fromList allNodes)
+                   (Set.fromList <| Dict.keys allNodes)
                    (entities |> List.map .id |> Set.fromList)
 
     startingIndex = List.length entities
@@ -62,10 +64,13 @@ updateGraphNodes { entities, links, simulation } nodes =
     newEntities : List Entity
     newEntities = newNodes |> Set.toList
                            |> List.indexedMap (,)
-                           |> List.map (\(idx, nodeAddr) -> Force.entity (startingIndex + idx) nodeAddr)
-                           |> List.map (\e -> { e | id = e.value })
+                           |> List.filterMap (\(idx, nodeAddr) -> Maybe.map (\v -> Force.entity (startingIndex + idx) (nodeAddr, v)) (Dict.get nodeAddr allNodes))
+                           |> List.map (\e -> { e | id = Tuple.first e.value, value = Tuple.second e.value })
 
-    allEntities = List.append entities newEntities
+    updatedEntities : List Entity
+    updatedEntities = entities |> List.map (\e -> { e | value = withDefault e.value (Dict.get e.id allNodes) })
+
+    allEntities = List.append updatedEntities newEntities
 
     nodeLinks : Set NodesLink
     nodeLinks = Nodes.allLinks nodes |> List.filter (\(n, m) -> n /= m)
@@ -79,8 +84,7 @@ updateGraphNodes { entities, links, simulation } nodes =
     forces =
         [
           Force.links <| Set.toList nodeLinks
-        , Force.manyBodyStrength -80 allNodes
---        Force.manyBody allNodes
+        , Force.manyBodyStrength -80 (Dict.keys allNodes)
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]
 
@@ -88,7 +92,7 @@ updateGraphNodes { entities, links, simulation } nodes =
   in
     { entities = allEntities -- TODO exclude removed nodes
     , links = nodeLinks
-    , simulation = Force.simulation forces -- TODO nodes, links and center
+    , simulation = Force.simulation forces
     }
 
 

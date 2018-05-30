@@ -1,4 +1,5 @@
 import AkkaCluster.Graph exposing (GraphNodes)
+import Dict
 import Html exposing (..)
 import Bootstrap.CDN as CDN
 import Bootstrap.Grid as Grid
@@ -114,7 +115,7 @@ view model =
         ]
     , Grid.row []
         [ Grid.col []
-          [ renderGraph model.graph ]
+          [ renderGraph model.nodes model.graph ]
         ]
     ]
 
@@ -138,7 +139,7 @@ viewNodes nodes =
                     , div [] [ text labels ]
                     ]
 
-    sortedAllNodes = Nodes.allNodes nodes |> List.sort
+    sortedAllNodes = Nodes.allNodeInfo nodes |> Dict.keys |> List.sort
 
     nodeTableHeaders : List (Html Msg)
     nodeTableHeaders = List.map (\nodeId -> text <| Nodes.nodeHostname nodeId) <| sortedAllNodes
@@ -157,16 +158,16 @@ viewNodes nodes =
 ---
 
 
-renderGraph : Graph.GraphNodes -> Svg Msg
-renderGraph graphNodes =
+renderGraph : Nodes -> Graph.GraphNodes -> Svg Msg
+renderGraph nodes graphNodes =
     svg [ width (toString Graph.screenWidth ++ "px"), height (toString Graph.screenHeight ++ "px") ]
-        [ Svg.g [ class "links" ] <| List.map (linkElement graphNodes) <| Set.toList graphNodes.links
-        , Svg.g [ class "nodes" ] <| List.map nodeElement <| graphNodes.entities
+        [ Svg.g [ class "links" ] <| List.map (linkElement nodes graphNodes) <| Set.toList graphNodes.links
+        , Svg.g [ class "nodes" ] <| List.map (nodeElement nodes) <| graphNodes.entities
         ]
 
 
-linkElement : Graph.GraphNodes -> Graph.NodesLink -> Svg a
-linkElement graph edge =
+linkElement : Nodes -> Graph.GraphNodes -> Graph.NodesLink -> Svg a
+linkElement nodes graph edge =
     let
         source = List.head <| List.filter (\e -> e.id == Tuple.first edge) graph.entities
         target = List.head <| List.filter (\e -> e.id == Tuple.second edge) graph.entities
@@ -183,10 +184,16 @@ linkElement graph edge =
             ) source target
 
 
-nodeElement node =
+nodeElement : Nodes -> Graph.Entity -> Svg a
+nodeElement nodes node =
+  let
+    color = if node.value.isLeader
+            then "#ff99ff"
+            else "#99ccff"
+  in
     circle
         [ r "5.5"
-        , fill "#0f0ff0"
+        , fill color
         , stroke "transparent"
         , strokeWidth "17px"
 --        , onMouseDown node.id
