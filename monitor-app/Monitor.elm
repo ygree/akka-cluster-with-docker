@@ -189,11 +189,14 @@ nodeElement nodes node =
   let
     color = if node.value.isLeader
             then "#ff99ff"
+    --TODO mark leaving and exiting node
+--            else if node.value.status
             else "#99ccff"
 
     strokeColor = if node.value.isOldest
                   then "#ffcc00"
                   else color
+
   in
     svg []
       [

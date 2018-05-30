@@ -65,6 +65,7 @@ updateGraphNodes { entities, links, simulation } nodes =
     leftEntities : List Entity
     leftEntities = entities |> List.filter (\e -> not (Set.member e.id missingNodes))
 
+    -- TODO: depict new nodes in the center
     startingIndex = List.length leftEntities
 
     newEntities : List Entity
