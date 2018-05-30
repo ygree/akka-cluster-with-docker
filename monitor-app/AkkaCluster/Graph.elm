@@ -67,18 +67,19 @@ updateGraphNodes { entities, links, simulation } nodes =
     allEntities = List.append entities newEntities
 
     nodeLinks : Set NodesLink
-    nodeLinks = Nodes.allLinks nodes |> List.map (uncurry nodeLink)
+    nodeLinks = Nodes.allLinks nodes |> List.filter (\(n, m) -> n /= m)
+                                     |> List.map (uncurry nodeLink)
                                      |> Set.fromList
 
     newNodeLinks = Set.diff nodeLinks links
 
     absentNodeLinks = Set.diff links nodeLinks
 
-
     forces =
         [
           Force.links <| Set.toList nodeLinks
         , Force.manyBody allNodes
+--        Force.manyBody allNodes
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]
 

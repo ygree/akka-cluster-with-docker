@@ -29,7 +29,7 @@ main =
   Html.program { init = (model, Cmd.none)
                , view = view
                , update = update
-               , subscriptions = \_ -> Sub.none -- every second <| \_ -> Fetch
+               , subscriptions = subscriptions
                }
 
 -- MODEL
@@ -44,10 +44,19 @@ model = { nodes = Nodes.empty
         , graph = Graph.emptyGraphNodes
         }
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    if Force.isCompleted model.graph.simulation then
+        Sub.none
+    else
+--        Sub.none
+        AnimationFrame.times Tick
+
 -- UPDATE
 
 type Msg = Fetch
          | ClusterMembersResp NodeUrl (Result Http.Error ClusterMembers)
+         | Tick Time
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -64,6 +73,12 @@ update msg model =
 
     ClusterMembersResp nodeUrl (Err err) ->
       ({ model | nodes = Nodes.removeClusterMembers model.nodes nodeUrl }, Cmd.none)
+
+    Tick t -> let
+                (newSimulation, newEntities) = Force.tick model.graph.simulation model.graph.entities
+                graph = model.graph
+              in
+                ({ model | graph = { graph | entities = newEntities, simulation = newSimulation }}, Cmd.none)
 
 sourceUrls : List NodeUrl
 sourceUrls = List.map (\n -> "http://localhost:8558/node-" ++ toString n ++ "/cluster/members") [1,2,3,4,5]
