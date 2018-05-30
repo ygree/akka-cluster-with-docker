@@ -10,6 +10,7 @@ module AkkaCluster.Nodes exposing
   , allNodes
   , nodeInfo
   , NodeStatus (..)
+  , allLinks
   )
 
 import Dict exposing (Dict)
@@ -56,9 +57,9 @@ sourceNodes nodes = List.sortBy (sourceHostname nodes) (Dict.keys nodes)
 allNodes : Nodes -> List NodeAddress
 allNodes nodes = List.map .selfNode (Dict.values nodes)
 
-maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
-maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)
-                                      <| List.filter (\m -> m.node == node) cm.members
+--maybeMemberStatus : NodeAddress -> ClusterMembers -> Maybe String
+--maybeMemberStatus node cm = List.head <| List.map (\m -> toString m.status)
+--                                      <| List.filter (\m -> m.node == node) cm.members
 
 sourceHostname : Nodes -> NodeUrl -> String
 sourceHostname nodes source = withDefault source <| Maybe.map nodeHostname (sourceNode nodes source)
@@ -68,7 +69,21 @@ nodeInfo nodes source node = nodes |> Dict.get source
                                    |> Maybe.map .knownNodes
                                    |> Maybe.andThen (Dict.get node)
 
+allLinks : Nodes -> List (NodeAddress, NodeAddress)
+allLinks nodes = nodes |> Dict.values
+                       |> List.concatMap (\({selfNode, knownNodes}) ->
+                                            (withKnownStatus knownNodes) |> List.map (\node -> (selfNode, node))
+                                         )
+
 ------------------------------------------------------------------------------------------------------------------------
+
+withKnownStatus : Dict NodeAddress NodeInfo -> List NodeAddress
+withKnownStatus knownNodes = Dict.toList knownNodes
+                               |> List.filterMap (\(node, info) ->
+                                                   case info.status of
+                                                     UnknownNodeStatus -> Nothing
+                                                     _ -> Just node
+                                                 )
 
 sourceNode : Nodes -> NodeUrl -> Maybe NodeAddress
 sourceNode nodes source = Maybe.map (.selfNode) (Dict.get source nodes)

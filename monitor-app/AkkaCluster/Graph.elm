@@ -2,20 +2,32 @@ module AkkaCluster.Graph exposing
   ( GraphNodes
   , emptyGraphNodes
   , updateGraphNodes
+  , screenWidth
+  , screenHeight
   )
 
 import AkkaCluster.Json exposing (NodeAddress)
-import AkkaCluster.Nodes exposing (..)
+import AkkaCluster.Nodes as Nodes exposing (..)
 import Dict exposing (Dict)
-import Graph exposing (Graph, NodeId)
+--import Graph exposing (Graph, NodeId)
 import Set exposing (Set)
 import Visualization.Force as Force exposing (State)
+
+
+screenWidth : Float
+screenWidth =
+    990
+
+
+screenHeight : Float
+screenHeight =
+    504
 
 
 type alias GraphNodes =
   { entities : List Entity
   , links : Set NodesLink
---  , simulation : Force.State NodeId
+  , simulation : Force.State NodeAddress
   }
 
 type alias Entity = Force.Entity NodeAddress { value : NodeAddress }
@@ -31,27 +43,50 @@ emptyGraphNodes : GraphNodes
 emptyGraphNodes =
   { entities = []
   , links = Set.empty
+  , simulation = Force.simulation []
   }
 
 updateGraphNodes : GraphNodes -> Nodes -> GraphNodes
-updateGraphNodes { entities, links } nodes =
+updateGraphNodes { entities, links, simulation } nodes =
   let
-    newNodeMap : Set NodeAddress
-    newNodeMap = Set.diff
-                   (nodes |> allNodes |> Set.fromList)
+    allNodes = Nodes.allNodes nodes
+
+    newNodes : Set NodeAddress
+    newNodes = Set.diff
+                   (Set.fromList allNodes)
                    (entities |> List.map .id |> Set.fromList)
 
     startingIndex = List.length entities
 
     newEntities : List Entity
-    newEntities = newNodeMap |> Set.toList
-                             |> List.indexedMap (,)
-                             |> List.map (\(idx, nodeAddr) -> Force.entity (startingIndex + idx) nodeAddr)
-                             |> List.map (\e -> { e | id = e.value })
+    newEntities = newNodes |> Set.toList
+                           |> List.indexedMap (,)
+                           |> List.map (\(idx, nodeAddr) -> Force.entity (startingIndex + idx) nodeAddr)
+                           |> List.map (\e -> { e | id = e.value })
+
+    allEntities = List.append entities newEntities
+
+    nodeLinks : Set NodesLink
+    nodeLinks = Nodes.allLinks nodes |> List.map (uncurry nodeLink)
+                                     |> Set.fromList
+
+    newNodeLinks = Set.diff nodeLinks links
+
+    absentNodeLinks = Set.diff links nodeLinks
+
+
+    forces =
+        [
+          Force.links <| Set.toList nodeLinks
+        , Force.manyBody allNodes
+        , Force.center (screenWidth / 2) (screenHeight / 2)
+        ]
+
 
   in
-    { entities = List.append entities newEntities -- TODO exclude removed nodes
-    , links = links -- TODO links
+    { entities = allEntities -- TODO exclude removed nodes
+    , links = nodeLinks
+    , simulation = Force.simulation forces -- TODO nodes, links and center
     }
 
 
