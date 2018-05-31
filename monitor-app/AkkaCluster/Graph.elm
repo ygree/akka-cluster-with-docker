@@ -77,6 +77,7 @@ updateGraphNodes { entities, links, simulation } nodes =
     updatedEntities : List Entity
     updatedEntities = leftEntities |> List.map (\e -> { e | value = withDefault e.value (Dict.get e.id allNodes) })
 
+    allEntities : List Entity
     allEntities = List.append updatedEntities newEntities
 
     nodeLinks : Set NodesLink
@@ -84,20 +85,34 @@ updateGraphNodes { entities, links, simulation } nodes =
                                      |> List.map (uncurry nodeLink)
                                      |> Set.fromList
 
+    unreachableLinks : Set NodesLink
+    unreachableLinks = Nodes.unreachableLinks nodes |> List.filter (\(n, m) -> n /= m)
+                                                    |> List.map (uncurry nodeLink)
+                                                    |> Set.fromList
+
     newNodeLinks = Set.diff nodeLinks links
 
     absentNodeLinks = Set.diff links nodeLinks
 
+    visibleLinks = forceLinks 200 <| Set.toList nodeLinks
+    invisibleLinks = forceLinks 200 <| Set.toList unreachableLinks
+
     forces =
         [
-          Force.links <| Set.toList nodeLinks
-        , Force.manyBodyStrength -80 (Dict.keys allNodes)
+          visibleLinks
+        , invisibleLinks
+        , Force.manyBodyStrength -15 (Dict.keys allNodes)
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]
 
+    forceLinks : Float -> List ( comparable, comparable ) -> Force.Force comparable
+    forceLinks distance =
+      List.map (\( source, target ) -> { source = source, target = target, distance = distance, strength = Nothing }) >> Force.customLinks 1
+
+--    Simulation oldSimulation =
 
   in
-    { entities = allEntities -- TODO exclude removed nodes
+    { entities = allEntities
     , links = nodeLinks
     , simulation = Force.simulation forces
     }

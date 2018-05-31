@@ -12,6 +12,7 @@ module AkkaCluster.Nodes exposing
   , nodeInfo
   , NodeStatus (..)
   , allLinks
+  , unreachableLinks
   )
 
 import Dict exposing (Dict)
@@ -78,6 +79,12 @@ allLinks nodes = nodes |> Dict.values
                                             (withKnownStatus knownNodes) |> List.map (\node -> (selfNode, node))
                                          )
 
+unreachableLinks : Nodes -> List (NodeAddress, NodeAddress)
+unreachableLinks nodes = nodes |> Dict.values
+                               |> List.concatMap (\({selfNode, knownNodes}) ->
+                                                    (withUnknownStatus knownNodes) |> List.map (\node -> (selfNode, node))
+                                                 )
+
 ------------------------------------------------------------------------------------------------------------------------
 
 withKnownStatus : Dict NodeAddress NodeInfo -> List NodeAddress
@@ -86,6 +93,14 @@ withKnownStatus knownNodes = Dict.toList knownNodes
                                                    case info.status of
                                                      UnknownNodeStatus -> Nothing
                                                      _ -> Just node
+                                                 )
+
+withUnknownStatus : Dict NodeAddress NodeInfo -> List NodeAddress
+withUnknownStatus knownNodes = Dict.toList knownNodes
+                                 |> List.filterMap (\(node, info) ->
+                                                   case info.status of
+                                                     UnknownNodeStatus -> Just node
+                                                     _ -> Nothing
                                                  )
 
 sourceNode : Nodes -> NodeUrl -> Maybe NodeAddress

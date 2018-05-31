@@ -125,14 +125,14 @@ viewNodes nodes =
     drawNodeCell : NodeUrl -> NodeAddress -> Table.Cell Msg
     drawNodeCell source node =
         case nodeInfo nodes source node of
-          Nothing -> Table.td [] [ text "N/A" ]
+          Nothing -> Table.td [] [ text "" ]
           Just { status, isLeader, isOldest } ->
             let
               leaderLabel = if isLeader then ["leader"] else []
               oldestLabel = if isOldest then ["oldest"] else []
               labels = foldr (++) "" <| intersperse " | " <| leaderLabel ++ oldestLabel
               statusLabel = case status of
-                              Nodes.UnknownNodeStatus -> "???"
+                              Nodes.UnknownNodeStatus -> "?"
                               Nodes.NodeStatus memberStatus -> toString memberStatus
             in Table.td []
                     [ div [] [ text statusLabel ]
