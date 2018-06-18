@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ "$#" -ne 2 ]; then
+  echo "Illegal number of parameters. Passed: $#.\nExpected two param: {on|off} <node-number>"
+
+elif [ "$1" == "off" ] || [ "$1" == "on" ]; then
+
+  ./connectivity $1 $2 1
+  ./connectivity $1 $2 2
+  ./connectivity $1 $2 3
+  ./connectivity $1 $2 4
+  ./connectivity $1 $2 5
+
+else
+  echo "Unexpected param: $1\nExpected two params: {on|off} <node-number>"
+
+fi
+
