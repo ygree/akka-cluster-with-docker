@@ -126,14 +126,15 @@ viewNodes nodes =
     drawNodeCell source node =
         case nodeInfo nodes source node of
           Nothing -> Table.td [] [ text "" ]
-          Just { status, isLeader, isOldest } ->
+          Just { status, isLeader, isOldest, isUnreachable } ->
             let
               leaderLabel = if isLeader then ["leader"] else []
               oldestLabel = if isOldest then ["oldest"] else []
               labels = foldr (++) "" <| intersperse " | " <| leaderLabel ++ oldestLabel
+              unreachablePrefix = if isUnreachable then "(?) " else ""
               statusLabel = case status of
                               Nodes.UnknownNodeStatus -> "?"
-                              Nodes.NodeStatus memberStatus -> toString memberStatus
+                              Nodes.NodeStatus memberStatus -> unreachablePrefix ++ toString memberStatus
             in Table.td []
                     [ div [] [ text statusLabel ]
                     , div [] [ text labels ]
@@ -161,28 +162,29 @@ viewNodes nodes =
 renderGraph : Nodes -> Graph.GraphNodes -> Svg Msg
 renderGraph nodes graphNodes =
     svg [ width (toString Graph.screenWidth ++ "px"), height (toString Graph.screenHeight ++ "px") ]
-        [ Svg.g [ class "links" ] <| List.map (linkElement nodes graphNodes) <| Set.toList graphNodes.links
+        [ 
+          Svg.g [ class "links" ] <| List.map (linkElement nodes graphNodes []) <| Set.toList graphNodes.links
+        , Svg.g [ class "links" ] <| List.map (linkElement nodes graphNodes [strokeDasharray "2, 10"]) <| Set.toList graphNodes.unreachableLinks
         , Svg.g [ class "nodes" ] <| List.map (nodeElement nodes) <| graphNodes.entities
         ]
 
-
-linkElement : Nodes -> Graph.GraphNodes -> Graph.NodesLink -> Svg a
-linkElement nodes graph edge =
+linkElement : Nodes -> Graph.GraphNodes -> List (Attribute a) -> Graph.NodesLink -> Svg a
+linkElement nodes graph attrs edge =
     let
         source = List.head <| List.filter (\e -> e.id == Tuple.first edge) graph.entities
         target = List.head <| List.filter (\e -> e.id == Tuple.second edge) graph.entities
     in withDefault (div [] []) <| Maybe.map2 (\s t ->
-        line
-            [ strokeWidth "1"
+        line 
+          ( List.append [ strokeWidth "1"
             , stroke "#aaa"
             , x1 (toString s.x)
             , y1 (toString s.y)
             , x2 (toString t.x)
             , y2 (toString t.y)
-            ]
-            []
-            ) source target
-
+            ] attrs
+          )
+          []
+        ) source target
 
 nodeElement : Nodes -> Graph.Entity -> Svg a
 nodeElement nodes node =

@@ -30,6 +30,7 @@ type alias GraphNodes =
   { entities : List Entity
   , links : Set NodesLink
   , simulation : Force.State NodeAddress
+  , unreachableLinks : Set NodesLink
   }
 
 type alias Entity = Force.Entity NodeAddress { value : NodeInfo }
@@ -46,10 +47,11 @@ emptyGraphNodes =
   { entities = []
   , links = Set.empty
   , simulation = Force.simulation []
+  , unreachableLinks = Set.empty
   }
 
 updateGraphNodes : GraphNodes -> Nodes -> GraphNodes
-updateGraphNodes { entities, links, simulation } nodes =
+updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
   let
     allNodes : Dict NodeAddress Nodes.NodeInfo
     allNodes = Nodes.allNodeInfo nodes
@@ -113,6 +115,7 @@ updateGraphNodes { entities, links, simulation } nodes =
   in
     { entities = allEntities
     , links = nodeLinks
+    , unreachableLinks = unreachableLinks
     , simulation = Force.simulation forces
     }
 

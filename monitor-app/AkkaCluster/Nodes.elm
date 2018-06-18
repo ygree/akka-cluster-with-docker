@@ -40,6 +40,7 @@ type alias NodeInfo =
   { status : NodeStatus
   , isLeader : Bool
   , isOldest : Bool
+  , isUnreachable : Bool
   }
 
 insertClusterMembers : Nodes -> NodeUrl -> ClusterMembers -> Nodes
@@ -80,10 +81,22 @@ allLinks nodes = nodes |> Dict.values
                                          )
 
 unreachableLinks : Nodes -> List (NodeAddress, NodeAddress)
-unreachableLinks nodes = nodes |> Dict.values
-                               |> List.concatMap (\({selfNode, knownNodes}) ->
-                                                    (withUnknownStatus knownNodes) |> List.map (\node -> (selfNode, node))
-                                                 )
+unreachableLinks nodes =
+  let
+    withUnknownStatus : Dict NodeAddress NodeInfo -> List NodeAddress
+    withUnknownStatus knownNodes = 
+      Dict.toList knownNodes
+        |> List.filterMap 
+          (\(node, info) ->
+            case info.status of
+              UnknownNodeStatus -> Just node
+              _ -> if info.isUnreachable then Just node else Nothing
+          )
+  in
+    nodes |> Dict.values
+          |> List.concatMap (\({selfNode, knownNodes}) ->
+            (withUnknownStatus knownNodes) |> List.map (\node -> (selfNode, node))
+          )
 
 -- leaders : Nodes -> List NodeAddress
 -- leaders nodes = let
@@ -117,15 +130,7 @@ withKnownStatus knownNodes = Dict.toList knownNodes
                                |> List.filterMap (\(node, info) ->
                                                    case info.status of
                                                      UnknownNodeStatus -> Nothing
-                                                     _ -> Just node
-                                                 )
-
-withUnknownStatus : Dict NodeAddress NodeInfo -> List NodeAddress
-withUnknownStatus knownNodes = Dict.toList knownNodes
-                                 |> List.filterMap (\(node, info) ->
-                                                   case info.status of
-                                                     UnknownNodeStatus -> Just node
-                                                     _ -> Nothing
+                                                     _ -> if info.isUnreachable then Nothing else Just node
                                                  )
 
 sourceNode : Nodes -> NodeUrl -> Maybe NodeAddress
@@ -153,11 +158,10 @@ nodeInfoFromClusterMembers node members =
     nodeStatus : Maybe MemberStatus
     nodeStatus = List.head <| List.map (.status) <| List.filter (\m -> m.node == node) members.members
   in
-    { status = if isUnreachable
-               then UnknownNodeStatus
-               else withDefault UnknownNodeStatus <| Maybe.map NodeStatus nodeStatus
+    { status = withDefault UnknownNodeStatus <| Maybe.map NodeStatus nodeStatus
     , isLeader = members.leader == node
     , isOldest = members.oldest == node
+    , isUnreachable = isUnreachable
     }
 
 
