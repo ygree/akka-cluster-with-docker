@@ -9,6 +9,7 @@ module AkkaCluster.Nodes exposing
   , sourceNodes
   , sourceHostname
   , allNodeInfo
+  , allNodes
   , nodeInfo
   , NodeStatus (..)
   , allLinks
@@ -21,6 +22,7 @@ import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, MemberStatus, N
 import Maybe exposing (withDefault)
 import Regex exposing (HowMany(AtMost), regex, split)
 import AkkaCluster.Json
+import Set exposing (Set)
 
 type alias Nodes = Dict NodeUrl ClusterNode
 
@@ -56,6 +58,10 @@ nodeHostname node = withDefault node <| List.head <| List.drop 2 <| split (AtMos
 
 sourceNodes : Nodes -> List NodeUrl
 sourceNodes nodes = List.sortBy (sourceHostname nodes) (Dict.keys nodes)
+
+allNodes : Nodes -> Set NodeAddress
+allNodes nodes = Dict.values nodes |> List.concatMap (\v -> Dict.keys v.knownNodes)
+                                   |> Set.fromList
 
 allNodeInfo : Nodes -> Dict NodeAddress NodeInfo
 allNodeInfo nodes = (Dict.values nodes) |> List.filterMap (\v -> Maybe.map (\info -> (v.selfNode, info))

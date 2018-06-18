@@ -140,7 +140,8 @@ viewNodes nodes =
                     , div [] [ text labels ]
                     ]
 
-    sortedAllNodes = Nodes.allNodeInfo nodes |> Dict.keys |> List.sort
+--    sortedAllNodes = Nodes.allNodeInfo nodes |> Dict.keys |> List.sort
+    sortedAllNodes = Nodes.allNodes nodes |> Set.toList |> List.sort
 
     nodeTableHeaders : List (Html Msg)
     nodeTableHeaders = List.map (\nodeId -> text <| Nodes.nodeHostname nodeId) <| sortedAllNodes

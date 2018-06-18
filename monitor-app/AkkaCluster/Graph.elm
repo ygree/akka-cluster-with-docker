@@ -53,16 +53,19 @@ emptyGraphNodes =
 updateGraphNodes : GraphNodes -> Nodes -> GraphNodes
 updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
   let
-    allNodes : Dict NodeAddress Nodes.NodeInfo
-    allNodes = Nodes.allNodeInfo nodes
+    allNodeInfos : Dict NodeAddress Nodes.NodeInfo
+    allNodeInfos = Nodes.allNodeInfo nodes
+
+    allNodes : Set NodeAddress
+    allNodes = Nodes.allNodes nodes
 
     newNodes : Set NodeAddress
-    newNodes = Set.diff (Set.fromList <| Dict.keys allNodes)
+    newNodes = Set.diff allNodes
                         (entities |> List.map .id |> Set.fromList)
 
     missingNodes : Set NodeAddress
     missingNodes = Set.diff (entities |> List.map (\({id}) -> id) |> Set.fromList)
-                            (Set.fromList <| Dict.keys allNodes)
+                            allNodes
 
     leftEntities : List Entity
     leftEntities = entities |> List.filter (\e -> not (Set.member e.id missingNodes))
@@ -70,14 +73,27 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
     -- TODO: depict new nodes in the center
     startingIndex = List.length leftEntities
 
+    unknownNodeInfo : NodeInfo
+    unknownNodeInfo =
+      { status = UnknownNodeStatus
+      , isLeader = False
+      , isOldest = False
+      , isUnreachable = True
+      }
+
     newEntities : List Entity
     newEntities = newNodes |> Set.toList
                            |> List.indexedMap (,)
-                           |> List.filterMap (\(idx, nodeAddr) -> Maybe.map (\v -> Force.entity (startingIndex + idx) (nodeAddr, v)) (Dict.get nodeAddr allNodes))
+                           |> List.map (\(idx, nodeAddr) ->
+                                Force.entity (startingIndex + idx)
+                                          ( nodeAddr
+                                          , withDefault unknownNodeInfo <| Dict.get nodeAddr allNodeInfos
+                                          )
+                              )
                            |> List.map (\e -> { e | id = Tuple.first e.value, value = Tuple.second e.value })
 
     updatedEntities : List Entity
-    updatedEntities = leftEntities |> List.map (\e -> { e | value = withDefault e.value (Dict.get e.id allNodes) })
+    updatedEntities = leftEntities |> List.map (\e -> { e | value = withDefault e.value (Dict.get e.id allNodeInfos) })
 
     allEntities : List Entity
     allEntities = List.append updatedEntities newEntities
@@ -102,7 +118,7 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
         [
           visibleLinks
         , invisibleLinks
-        , Force.manyBodyStrength -15 (Dict.keys allNodes)
+        , Force.manyBodyStrength -15 (Set.toList allNodes)
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]
 
