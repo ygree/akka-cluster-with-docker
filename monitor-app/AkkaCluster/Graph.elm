@@ -90,12 +90,11 @@ updateGraphNodes { entities, links, simulation } nodes =
                                                     |> List.map (uncurry nodeLink)
                                                     |> Set.fromList
 
-    newNodeLinks = Set.diff nodeLinks links
+    leaderLinks : Set NodesLink
+    leaderLinks = Nodes.leaderLinks nodes |> Set.fromList
 
-    absentNodeLinks = Set.diff links nodeLinks
-
-    visibleLinks = forceLinks 200 <| Set.toList nodeLinks
-    invisibleLinks = forceLinks 200 <| Set.toList unreachableLinks
+    visibleLinks = forceLinks 100 <| Set.toList nodeLinks
+    invisibleLinks = forceLinks 250 <| Set.toList leaderLinks
 
     forces =
         [

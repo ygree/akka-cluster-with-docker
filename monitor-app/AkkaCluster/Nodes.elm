@@ -13,13 +13,13 @@ module AkkaCluster.Nodes exposing
   , NodeStatus (..)
   , allLinks
   , unreachableLinks
+  , leaderLinks
   )
 
 import Dict exposing (Dict)
 import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, MemberStatus, NodeAddress, decodeMembers)
 import Maybe exposing (withDefault)
 import Regex exposing (HowMany(AtMost), regex, split)
-import Set exposing (Set)
 import AkkaCluster.Json
 
 type alias Nodes = Dict NodeUrl ClusterNode
@@ -84,6 +84,31 @@ unreachableLinks nodes = nodes |> Dict.values
                                |> List.concatMap (\({selfNode, knownNodes}) ->
                                                     (withUnknownStatus knownNodes) |> List.map (\node -> (selfNode, node))
                                                  )
+
+-- leaders : Nodes -> List NodeAddress
+-- leaders nodes = let
+--                   filterLeaderNode : ClusterNode -> Maybe NodeAddress
+--                   filterLeaderNode node = Dict.get node.selfNode node.knownNodes |> Maybe.andThen (\v -> if v.isLeader then Just node.selfNode else Nothing)
+--                 in
+--                   nodes |> Dict.values
+--                         |> List.filterMap filterLeaderNode
+
+leaderLinks : Nodes -> List (NodeAddress, NodeAddress)
+leaderLinks nodes = 
+  let
+    nodeAddresses : Nodes -> List NodeAddress
+    nodeAddresses nodes = nodes |> Dict.values 
+                                |> List.map .selfNode
+
+    allLinks : List NodeAddress -> List (NodeAddress, NodeAddress)
+    allLinks ns =
+      case (List.head ns, List.tail ns) of
+        (Just n, Just rs) -> rs |> List.map (\r -> (n, r))
+                                |> List.append (allLinks rs)
+        _ -> []
+
+  in allLinks <| nodeAddresses nodes
+    
 
 ------------------------------------------------------------------------------------------------------------------------
 
