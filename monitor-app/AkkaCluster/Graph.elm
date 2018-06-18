@@ -64,7 +64,7 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
                         (entities |> List.map .id |> Set.fromList)
 
     missingNodes : Set NodeAddress
-    missingNodes = Set.diff (entities |> List.map (\({id}) -> id) |> Set.fromList)
+    missingNodes = Set.diff (entities |> List.map .id |> Set.fromList)
                             allNodes
 
     leftEntities : List Entity
@@ -113,11 +113,13 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
 
     visibleLinks = forceLinks 100 <| Set.toList nodeLinks
     invisibleLinks = forceLinks 250 <| Set.toList leaderLinks
+    unreachableLinkForces = forceLinks 300 <| Set.toList unreachableLinks
 
     forces =
         [
           visibleLinks
         , invisibleLinks
+        , unreachableLinkForces
         , Force.manyBodyStrength -15 (Set.toList allNodes)
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]
