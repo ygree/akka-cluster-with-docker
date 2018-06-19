@@ -5,4 +5,4 @@ if [ "$#" -ne 2 ]; then
   exit
 fi
 
-docker-compose exec node-$1 curl -X DELETE http://node-$1:8558/cluster/members/ClusterSystem@node-$2:2552
+docker-compose exec node-$1 curl -X PUT -F 'operation=Leave' http://node-$1:8558/cluster/members/ClusterSystem@node-$2:2552
