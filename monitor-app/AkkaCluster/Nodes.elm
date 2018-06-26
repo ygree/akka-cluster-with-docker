@@ -15,6 +15,7 @@ module AkkaCluster.Nodes exposing
   , allLinks
   , unreachableLinks
   , leaderLinks
+  , leaders
   )
 
 import Dict exposing (Dict)
@@ -101,16 +102,16 @@ unreachableLinks nodes =
   in
     nodes |> Dict.values
           |> List.concatMap (\({selfNode, knownNodes}) ->
-            (withUnknownStatus knownNodes) |> List.map (\node -> (selfNode, node))
+            withUnknownStatus knownNodes |> List.map (\node -> (selfNode, node))
           )
 
--- leaders : Nodes -> List NodeAddress
--- leaders nodes = let
---                   filterLeaderNode : ClusterNode -> Maybe NodeAddress
---                   filterLeaderNode node = Dict.get node.selfNode node.knownNodes |> Maybe.andThen (\v -> if v.isLeader then Just node.selfNode else Nothing)
---                 in
---                   nodes |> Dict.values
---                         |> List.filterMap filterLeaderNode
+leaders : Nodes -> List NodeAddress
+leaders nodes = let
+                  filterLeaderNode : ClusterNode -> Maybe NodeAddress
+                  filterLeaderNode node = Dict.get node.selfNode node.knownNodes |> Maybe.andThen (\v -> if v.isLeader then Just node.selfNode else Nothing)
+                in
+                  nodes |> Dict.values
+                        |> List.filterMap filterLeaderNode
 
 leaderLinks : Nodes -> List (NodeAddress, NodeAddress)
 leaderLinks nodes = 

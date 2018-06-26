@@ -111,16 +111,35 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
     leaderLinks : Set NodesLink
     leaderLinks = Nodes.leaderLinks nodes |> Set.fromList
 
-    visibleLinks = forceLinks 100 <| Set.toList nodeLinks
-    invisibleLinks = forceLinks 250 <| Set.toList leaderLinks
-    unreachableLinkForces = forceLinks 300 <| Set.toList unreachableLinks
+    leaderSet : Set NodeAddress
+    leaderSet = Nodes.leaders nodes |> Set.fromList
+
+    -- TODO streighten links between the leader and the other nodes
+
+    isLeader : NodeAddress -> Bool
+    isLeader node = Set.member node leaderSet
+
+    allLinks : Set NodesLink
+    allLinks = Set.union nodeLinks unreachableLinks
+
+    (linksWithLeader, otherLinks) = allLinks |> Set.toList
+                                             |> List.partition (\(a, b) -> isLeader a || isLeader b)
+
+    linksWithLeaderForces = forceLinks 100 linksWithLeader
+    -- otherLinksForces = forceLinks 200 otherLinks
+    -- visibleLinkForces = forceLinks 100 <| Set.toList nodeLinks
+    leaderLinkForces = forceLinks 300 <| Set.toList leaderLinks
+    unreachableLinkForces = forceLinks 300 <| List.filter (\(a,b) -> isLeader a && isLeader b) 
+                                           <| Set.toList unreachableLinks
+                                              
 
     forces =
         [
-          visibleLinks
-        , invisibleLinks
+          linksWithLeaderForces
+        -- , otherLinksForces
+        , leaderLinkForces
         , unreachableLinkForces
-        , Force.manyBodyStrength -15 (Set.toList allNodes)
+        , Force.manyBodyStrength -150 (Set.toList allNodes)
         , Force.center (screenWidth / 2) (screenHeight / 2)
         ]
 
@@ -132,8 +151,8 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
 
   in
     { entities = allEntities
-    , links = nodeLinks
-    , unreachableLinks = unreachableLinks
+    , links = nodeLinks |> Set.filter (\(a, b) -> isLeader a || isLeader b)
+    , unreachableLinks = unreachableLinks |> Set.filter (\(a, b) -> isLeader a && isLeader b)
     , simulation = Force.simulation forces
     }
 
