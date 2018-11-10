@@ -9,8 +9,7 @@ module AkkaCluster.Json exposing
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline
     exposing
-        ( 
-        required
+        ( required
         )
 import Set exposing (..)
 

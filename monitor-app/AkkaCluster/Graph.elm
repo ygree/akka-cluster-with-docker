@@ -11,9 +11,9 @@ module AkkaCluster.Graph exposing
 import AkkaCluster.Json exposing (NodeAddress)
 import AkkaCluster.Nodes as Nodes exposing (..)
 import Dict exposing (Dict)
+import Force as Force exposing (Entity, State)
 import Maybe exposing (withDefault)
 import Set exposing (Set)
-import Force as Force exposing (State, Entity)
 
 
 screenWidth : Float
@@ -99,9 +99,16 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
 
         newEntity : Int -> NodeAddress -> GraphEntity
         newEntity idx nodeAddr =
-            let initialRadius = 10
-                initialAngle = pi * (3 - sqrt 5)
-                index = startingIndex + idx
+            let
+                initialRadius =
+                    10
+
+                initialAngle =
+                    pi * (3 - sqrt 5)
+
+                index =
+                    startingIndex + idx
+
                 radius =
                     sqrt (toFloat index) * initialRadius
 
@@ -113,7 +120,7 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
             , vx = 0.0
             , vy = 0.0
             , id = nodeAddr
-            , value = (withDefault unknownNodeInfo <| Dict.get nodeAddr allNodeInfos)
+            , value = withDefault unknownNodeInfo <| Dict.get nodeAddr allNodeInfos
             }
 
         newEntities : List GraphEntity

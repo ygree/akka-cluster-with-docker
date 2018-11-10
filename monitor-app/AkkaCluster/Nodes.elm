@@ -68,12 +68,16 @@ removeClusterMembers nodes nodeUrl =
 
 
 nodeHostname : NodeAddress -> String
-nodeHostname node = node
-    --TODO: Regex.fromString now returns Maybe
-    -- withDefault node <| List.head <| List.drop 2 <| splitAtMost 3 (Regex.fromString "[@:]") node 
+nodeHostname node =
+    node
 
+
+
+--TODO: Regex.fromString now returns Maybe
+-- withDefault node <| List.head <| List.drop 2 <| splitAtMost 3 (Regex.fromString "[@:]") node
 -- abc : NodeAddress -> Maybe String
 -- abc node = Maybe.map (\r -> splitAtMost 3 r node) (Regex.fromString "[@:]")
+
 
 sourceNodes : Nodes -> List NodeUrl
 sourceNodes nodes =

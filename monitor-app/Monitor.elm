@@ -5,26 +5,25 @@ module Main exposing (Model, Msg(..), getClusterMembers, getClusterMembersReq, l
 import AkkaCluster.Graph as Graph exposing (GraphEntity, GraphNodes)
 import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, NodeAddress, decodeMembers)
 import AkkaCluster.Nodes as Nodes exposing (NodeUrl, Nodes, nodeInfo)
-import Browser
-import Browser.Events exposing (onAnimationFrame)
 import Bootstrap.Button as Button
 import Bootstrap.CDN as CDN
 import Bootstrap.Grid as Grid
 import Bootstrap.Table as Table
+import Browser
+import Browser.Events exposing (onAnimationFrame)
 import Dict
+import Force as Force exposing (State)
 import Html exposing (..)
 import Html.Events exposing (onClick)
 import Http exposing (..)
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Value)
 import List exposing (..)
 import Maybe exposing (withDefault)
 import Set exposing (Set)
+import String exposing (fromFloat)
 import Svg exposing (Svg, circle, line, rect, svg)
 import Svg.Attributes as Attr exposing (..)
 import Time exposing (Posix, every, millisToPosix)
-import Force as Force exposing (State)
-import String exposing (fromFloat)
-import Json.Decode exposing (Value)
 
 
 main =
@@ -72,8 +71,11 @@ type Msg
     | ClusterMembersResp NodeUrl (Result Http.Error ClusterMembers)
     | Tick Posix
 
-init : Json.Decode.Value -> ( Model, Cmd Msg )
-init flags = ( model, Cmd.none )
+
+init : Decode.Value -> ( Model, Cmd Msg )
+init flags =
+    ( model, Cmd.none )
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model1 =
@@ -131,6 +133,7 @@ getClusterMembersReq url decoder =
 
 
 -- VIEW
+
 
 view : Model -> Html Msg
 view model1 =
