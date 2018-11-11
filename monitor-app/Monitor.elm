@@ -1,6 +1,4 @@
-module Main exposing (main) 
-
---import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
+module Main exposing (main)
 
 import AkkaCluster.Graph as Graph exposing (GraphEntity, GraphNodes)
 import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, NodeAddress, decodeMembers, toString)
@@ -71,10 +69,13 @@ type Msg
     | Tick Posix
 
 
+
 -- The first param is used for passing some values from JavaScript but in fact
 -- it's unused here and left only because it's mandatory.
 -- It supports several types, I've peeked one that can handle arbitrary Json.
 -- TODO: How to get rid of this param?
+
+
 init : Decode.Value -> ( Model, Cmd Msg )
 init flags =
     ( initModel, Cmd.none )
@@ -112,11 +113,10 @@ update msg model1 =
 
 fetchData : Cmd Msg
 fetchData =
-    let        
+    let
         sourceUrls : List NodeUrl
         sourceUrls =
             List.map (\n -> "http://localhost:8558/node-" ++ fromFloat n ++ "/cluster/members") [ 1, 2, 3, 4, 5 ]
-
 
         getClusterMembers : NodeUrl -> Cmd Msg
         getClusterMembers nodeUrl =
@@ -134,9 +134,10 @@ fetchData =
                 , timeout = Just <| 2 * 1000 -- millis
                 , withCredentials = False
                 }
+    in
+    Cmd.batch <| List.map getClusterMembers sourceUrls
 
-    in Cmd.batch <| List.map getClusterMembers sourceUrls
-    
+
 
 -- VIEW
 
@@ -246,30 +247,30 @@ renderGraph nodes graphNodes =
 linkElement : Nodes -> Graph.GraphNodes -> List (Attribute a) -> Graph.NodesLink -> Svg a
 linkElement nodes graph attrs edge =
     let
+        source : Maybe GraphEntity
         source =
             List.head <| List.filter (\e -> e.id == Tuple.first edge) graph.entities
 
+        target : Maybe GraphEntity
         target =
             List.head <| List.filter (\e -> e.id == Tuple.second edge) graph.entities
+
+        drawLine : GraphEntity -> GraphEntity -> Svg a
+        drawLine s t =
+            line
+                (List.append
+                    [ strokeWidth "1"
+                    , stroke "#aaa"
+                    , x1 (fromFloat s.x)
+                    , y1 (fromFloat s.y)
+                    , x2 (fromFloat t.x)
+                    , y2 (fromFloat t.y)
+                    ]
+                    attrs
+                )
+                []
     in
-    withDefault (div [] []) <|
-        Maybe.map2
-            (\s t ->
-                line
-                    (List.append
-                        [ strokeWidth "1"
-                        , stroke "#aaa"
-                        , x1 (fromFloat s.x)
-                        , y1 (fromFloat s.y)
-                        , x2 (fromFloat t.x)
-                        , y2 (fromFloat t.y)
-                        ]
-                        attrs
-                    )
-                    []
-            )
-            source
-            target
+    withDefault (div [] []) (Maybe.map2 drawLine source target)
 
 
 nodeElement : Nodes -> GraphEntity -> Svg a
