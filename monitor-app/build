@@ -1,3 +1,5 @@
 #!/bin/sh
 
+elm-format *.elm AkkaCluster/ --yes
+
 elm make Monitor.elm --output=../cluster/monitor-node/content/index.html --optimize
