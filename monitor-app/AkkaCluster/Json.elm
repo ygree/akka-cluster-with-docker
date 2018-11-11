@@ -67,13 +67,27 @@ memberStatus =
 toString : MemberStatus -> String
 toString ms =
     case ms of
-        Joining  -> "Joining"
-        WeaklyUp -> "WeaklyUp"
-        Up       -> "Up"
-        Leaving  -> "Leaving"
-        Exiting  -> "Exiting"
-        Removed  -> "Removed"
-        Down     -> "Down"
+        Joining ->
+            "Joining"
+
+        WeaklyUp ->
+            "WeaklyUp"
+
+        Up ->
+            "Up"
+
+        Leaving ->
+            "Leaving"
+
+        Exiting ->
+            "Exiting"
+
+        Removed ->
+            "Removed"
+
+        Down ->
+            "Down"
+
 
 toMemberStatus : String -> Decoder MemberStatus
 toMemberStatus str =
