@@ -65,7 +65,7 @@ updateGraphNodes { entities, links, simulation, unreachableLinks } nodes =
     let
         allNodeInfos : Dict NodeAddress Nodes.NodeInfo
         allNodeInfos =
-            Nodes.allNodeInfo nodes
+            Nodes.allSelfNodeInfo nodes
 
         allNodes : Set NodeAddress
         allNodes =

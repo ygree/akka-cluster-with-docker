@@ -4,8 +4,8 @@ module AkkaCluster.Nodes exposing
     , NodeUrl
     , Nodes
     , allLinks
-    , allNodeInfo
     , allNodes
+    , allSelfNodeInfo
     , empty
     , insertClusterMembers
     , leaderLinks
@@ -93,14 +93,15 @@ allNodes nodes =
         |> Set.fromList
 
 
-allNodeInfo : Nodes -> Dict NodeAddress NodeInfo
-allNodeInfo nodes =
+allSelfNodeInfo : Nodes -> Dict NodeAddress NodeInfo
+allSelfNodeInfo nodes =
+    let
+        selfNodeInfo : ClusterNode -> Maybe ( NodeAddress, NodeInfo )
+        selfNodeInfo v =
+            Maybe.map (\info -> ( v.selfNode, info )) (Dict.get v.selfNode v.knownNodes)
+    in
     Dict.values nodes
-        |> List.filterMap
-            (\v ->
-                Maybe.map (\info -> ( v.selfNode, info ))
-                    (Dict.get v.selfNode v.knownNodes)
-            )
+        |> List.filterMap selfNodeInfo
         |> Dict.fromList
 
 
