@@ -71,6 +71,10 @@ type Msg
     | Tick Posix
 
 
+-- The first param is used for passing some values from JavaScript but in fact
+-- it's unused here and left only because it's mandatory.
+-- It supports several types, I've peeked one that can handle arbitrary Json.
+-- TODO: How to get rid of this param?
 init : Decode.Value -> ( Model, Cmd Msg )
 init flags =
     ( initModel, Cmd.none )
@@ -80,7 +84,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model1 =
     case msg of
         Fetch ->
-            ( model1, Cmd.batch <| List.map getClusterMembers sourceUrls )
+            ( model1, fetchData )
 
         ClusterMembersResp nodeUrl (Ok result) ->
             let
@@ -106,30 +110,33 @@ update msg model1 =
             ( { model1 | graph = { graph | entities = newEntities, simulation = newSimulation } }, Cmd.none )
 
 
-sourceUrls : List NodeUrl
-sourceUrls =
-    List.map (\n -> "http://localhost:8558/node-" ++ fromFloat n ++ "/cluster/members") [ 1, 2, 3, 4, 5 ]
+fetchData : Cmd Msg
+fetchData =
+    let        
+        sourceUrls : List NodeUrl
+        sourceUrls =
+            List.map (\n -> "http://localhost:8558/node-" ++ fromFloat n ++ "/cluster/members") [ 1, 2, 3, 4, 5 ]
 
 
-getClusterMembers : NodeUrl -> Cmd Msg
-getClusterMembers nodeUrl =
-    Http.send (ClusterMembersResp nodeUrl)
-        (getClusterMembersReq nodeUrl decodeMembers)
+        getClusterMembers : NodeUrl -> Cmd Msg
+        getClusterMembers nodeUrl =
+            Http.send (ClusterMembersResp nodeUrl)
+                (getClusterMembersReq nodeUrl decodeMembers)
 
+        getClusterMembersReq : String -> Decode.Decoder a -> Request a
+        getClusterMembersReq url decoder =
+            Http.request
+                { method = "GET"
+                , headers = []
+                , url = url
+                , body = emptyBody
+                , expect = expectJson decoder
+                , timeout = Just <| 2 * 1000 -- millis
+                , withCredentials = False
+                }
 
-getClusterMembersReq : String -> Decode.Decoder a -> Request a
-getClusterMembersReq url decoder =
-    Http.request
-        { method = "GET"
-        , headers = []
-        , url = url
-        , body = emptyBody
-        , expect = expectJson decoder
-        , timeout = Just <| 2 * 1000 -- millis
-        , withCredentials = False
-        }
-
-
+    in Cmd.batch <| List.map getClusterMembers sourceUrls
+    
 
 -- VIEW
 
