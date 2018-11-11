@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), getClusterMembers, getClusterMembersReq, linkElement, main, model, nodeElement, renderGraph, sourceUrls, subscriptions, update, view, viewNodes)
+module Main exposing (main) 
 
 --import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
 
@@ -45,8 +45,8 @@ type alias Model =
     }
 
 
-model : Model
-model =
+initModel : Model
+initModel =
     { nodes = Nodes.empty
     , graph = Graph.emptyGraphNodes
     }
@@ -58,7 +58,6 @@ subscriptions model1 =
         Sub.none
 
     else
-        --        Sub.none
         onAnimationFrame Tick
 
 
@@ -74,7 +73,7 @@ type Msg
 
 init : Decode.Value -> ( Model, Cmd Msg )
 init flags =
-    ( model, Cmd.none )
+    ( initModel, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
