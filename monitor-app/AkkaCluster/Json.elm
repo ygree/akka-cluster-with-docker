@@ -4,6 +4,7 @@ module AkkaCluster.Json exposing
     , MemberStatus
     , NodeAddress
     , decodeMembers
+    , toString
     )
 
 import Json.Decode exposing (..)
@@ -62,6 +63,17 @@ memberStatus : Decoder MemberStatus
 memberStatus =
     string |> andThen toMemberStatus
 
+
+toString : MemberStatus -> String
+toString ms =
+    case ms of
+        Joining  -> "Joining"
+        WeaklyUp -> "WeaklyUp"
+        Up       -> "Up"
+        Leaving  -> "Leaving"
+        Exiting  -> "Exiting"
+        Removed  -> "Removed"
+        Down     -> "Down"
 
 toMemberStatus : String -> Decoder MemberStatus
 toMemberStatus str =

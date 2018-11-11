@@ -3,7 +3,7 @@ module Main exposing (Model, Msg(..), getClusterMembers, getClusterMembersReq, l
 --import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
 
 import AkkaCluster.Graph as Graph exposing (GraphEntity, GraphNodes)
-import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, NodeAddress, decodeMembers)
+import AkkaCluster.Json exposing (ClusterMember, ClusterMembers, NodeAddress, decodeMembers, toString)
 import AkkaCluster.Nodes as Nodes exposing (NodeUrl, Nodes, nodeInfo)
 import Bootstrap.Button as Button
 import Bootstrap.CDN as CDN
@@ -195,7 +195,7 @@ viewNodes nodes =
                                     "?"
 
                                 Nodes.NodeStatus memberStatus ->
-                                    unreachablePrefix ++ Debug.toString memberStatus
+                                    unreachablePrefix ++ toString memberStatus
                     in
                     Table.td []
                         [ div [] [ text statusLabel ]
