@@ -8,14 +8,32 @@ It uses Docker to run cluster nodes and iptables to simulate network partitions.
 
 Each sample application logs its cluster status events into a file to the mounted folder `cluster/events`.
 
-1. Build application
+Also it has an Elm application that communicates with the Akka cluster and draws the state of the cluster in the browser.
+
+1. Build the Akka sample application
+
+> Note: the Akka sample application uses Lightbed Split-Brain-Resolver that is a commercial feature.
+You will need access to the Lightbend Bintray repository in order to build this sample app.
 
 ```
 cd akka-apps
 ./build
 ```
 
-2. Run cluster 
+2. Build the Monitor application
+
+> Note: this is Elm application and it requires Elm 0.19
+
+```
+cd monitor-app
+./build
+```
+
+3. Run cluster 
+
+> Note: you will need Docker and Docker Compose installed locally in order to run it.
+
+Once the sample application and the Monitor application are built you can run the cluster with docker-compose.
 
 ```
 cd cluster
@@ -24,9 +42,9 @@ cd cluster
 ```
 e.g. `./up configs/sbr-keep-majority.conf`
 
-# Cluster topology
+# Open the Monitor application
 
-cd cluster
+Open (http://localhost:8558) in the browser
 
 # Run cluster nodes
 

@@ -7,7 +7,7 @@ It's intended to communicate with akka nodes and provide a nice user interface t
 Build
 -----
 
-`elm make Control.elm --output=index.html`
+`elm make Monitor.elm --output=index.html`
 
 
 Add Dependency
