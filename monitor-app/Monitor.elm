@@ -51,12 +51,19 @@ initModel =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model1 =
-    if Force.isCompleted model1.graph.simulation then
-        Sub.none
+subscriptions model =
+    let
+        fetchSub =
+            Time.every 1000 (\_ -> Fetch)
 
-    else
-        onAnimationFrame Tick
+        tickSub =
+            if Force.isCompleted model.graph.simulation then
+                Sub.none
+
+            else
+                onAnimationFrame Tick
+    in
+    Sub.batch [ fetchSub, tickSub ]
 
 
 
