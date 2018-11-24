@@ -12,6 +12,7 @@ import Browser.Events exposing (onAnimationFrame)
 import Dict
 import Force as Force exposing (State)
 import Html exposing (..)
+import Html.Attributes as HAttr exposing (checked, type_)
 import Html.Events exposing (onClick)
 import Http exposing (..)
 import Json.Decode as Decode exposing (Value)
@@ -40,6 +41,7 @@ main =
 type alias Model =
     { nodes : Nodes
     , graph : Graph.GraphNodes
+    , autoFetch : Bool
     }
 
 
@@ -47,6 +49,7 @@ initModel : Model
 initModel =
     { nodes = Nodes.empty
     , graph = Graph.emptyGraphNodes
+    , autoFetch = True
     }
 
 
@@ -54,7 +57,11 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     let
         fetchSub =
-            Time.every 1000 (\_ -> Fetch)
+            if model.autoFetch then
+                Time.every 1000 (\_ -> Fetch)
+
+            else
+                Sub.none
 
         tickSub =
             if Force.isCompleted model.graph.simulation then
@@ -74,6 +81,7 @@ type Msg
     = Fetch
     | ClusterMembersResp NodeUrl (Result Http.Error ClusterMembers)
     | Tick Posix
+    | ToggleAutoFetch
 
 
 
@@ -89,39 +97,41 @@ init flags =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model1 =
+update msg model =
     case msg of
         Fetch ->
-            ( model1, fetchData )
+            ( model, fetchData )
 
         ClusterMembersResp nodeUrl (Ok result) ->
             let
                 newNodes =
-                    Nodes.insertClusterMembers model1.nodes nodeUrl result
+                    Nodes.insertClusterMembers model.nodes nodeUrl result
 
                 newGraph =
-                    Graph.updateGraphNodes model1.graph newNodes
+                    Graph.updateGraphNodes model.graph newNodes
             in
-            if model1.nodes == newNodes then
+            if model.nodes == newNodes then
                 -- do not refresh the model if the nodes haven't changed
-                ( model1, Cmd.none )
+                ( model, Cmd.none )
 
             else
-                ( { model1 | nodes = newNodes, graph = newGraph }, Cmd.none )
+                ( { model | nodes = newNodes, graph = newGraph }, Cmd.none )
 
         ClusterMembersResp nodeUrl (Err err) ->
-            ( { model1 | nodes = Nodes.removeClusterMembers model1.nodes nodeUrl }, Cmd.none )
+            ( { model | nodes = Nodes.removeClusterMembers model.nodes nodeUrl }, Cmd.none )
 
         Tick t ->
             let
                 ( newSimulation, newEntities ) =
-                    Force.tick model1.graph.simulation model1.graph.entities
+                    Force.tick model.graph.simulation model.graph.entities
 
                 graph =
-                    model1.graph
+                    model.graph
             in
-            ( { model1 | graph = { graph | entities = newEntities, simulation = newSimulation } }, Cmd.none )
+            ( { model | graph = { graph | entities = newEntities, simulation = newSimulation } }, Cmd.none )
 
+        ToggleAutoFetch ->
+            ( { model | autoFetch = not model.autoFetch }, Cmd.none )
 
 fetchData : Cmd Msg
 fetchData =
@@ -154,21 +164,32 @@ fetchData =
 -- VIEW
 
 
+checkbox : msg -> String -> Bool -> Html msg
+checkbox msg name isChecked =
+    let
+        attrs =
+            [ HAttr.type_ "checkbox", onClick msg, HAttr.checked isChecked ]
+    in
+    label []
+        [ input attrs []
+        , text name
+        ]
+
+
 view : Model -> Html Msg
-view model1 =
+view model =
     Grid.container []
         [ CDN.stylesheet -- creates an inline style node with the Bootstrap CSS
         , Grid.row []
             [ Grid.col []
                 [ Button.button [ Button.primary, Button.onClick Fetch ] [ text "Fetch" ]
-
-                -- , div [] [ text (toString model.nodes) ]
-                , viewNodes model1.nodes
+                , checkbox ToggleAutoFetch "Auto-fetch" model.autoFetch
+                , viewNodes model.nodes
                 ]
             ]
         , Grid.row []
             [ Grid.col []
-                [ renderGraph model1.nodes model1.graph ]
+                [ renderGraph model.nodes model.graph ]
             ]
         ]
 
