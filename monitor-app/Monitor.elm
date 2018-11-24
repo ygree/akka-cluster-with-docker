@@ -95,7 +95,12 @@ update msg model1 =
                 newGraph =
                     Graph.updateGraphNodes model1.graph newNodes
             in
-            ( { model1 | nodes = newNodes, graph = newGraph }, Cmd.none )
+            if model1.nodes == newNodes then
+                -- do not refresh the model if the nodes haven't changed
+                ( model1, Cmd.none )
+
+            else
+                ( { model1 | nodes = newNodes, graph = newGraph }, Cmd.none )
 
         ClusterMembersResp nodeUrl (Err err) ->
             ( { model1 | nodes = Nodes.removeClusterMembers model1.nodes nodeUrl }, Cmd.none )

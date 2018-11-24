@@ -8,7 +8,7 @@ It uses Docker to run cluster nodes and iptables to simulate network partitions.
 
 Each sample application logs its cluster status events into a file to the mounted folder `cluster/events`.
 
-Also it has an Elm application that communicates with the Akka cluster and draws the state of the cluster in the browser.
+Also there is a Monitor application that communicates with the Akka cluster and draws the state of the cluster in the browser.
 
 1. Build the Akka sample application
 
