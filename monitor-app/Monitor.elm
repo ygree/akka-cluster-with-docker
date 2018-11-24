@@ -133,6 +133,7 @@ update msg model =
         ToggleAutoFetch ->
             ( { model | autoFetch = not model.autoFetch }, Cmd.none )
 
+
 fetchData : Cmd Msg
 fetchData =
     let
@@ -180,6 +181,8 @@ view : Model -> Html Msg
 view model =
     Grid.container []
         [ CDN.stylesheet -- creates an inline style node with the Bootstrap CSS
+
+        -- , div [] [ text (Debug.toString model.autoFetch) ]
         , Grid.row []
             [ Grid.col []
                 [ Button.button [ Button.primary, Button.onClick Fetch ] [ text "Fetch" ]
