@@ -11,5 +11,7 @@ ln -fs $SRC_CONF configs/application.conf
 
 docker-compose build
 
+rm akka-logs/node-?.log
+
 docker-compose up -d
 

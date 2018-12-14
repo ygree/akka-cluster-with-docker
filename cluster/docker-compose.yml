@@ -16,6 +16,7 @@ services:
     volumes:
       - ./events:/events
       - ./configs:/configs
+      - ./akka-logs:/logs
   node-2:
     hostname: node-2
     build:
@@ -24,6 +25,7 @@ services:
     volumes:
       - ./events:/events
       - ./configs:/configs
+      - ./akka-logs:/logs
   node-3:
     hostname: node-3
     build:
@@ -32,6 +34,7 @@ services:
     volumes:
       - ./events:/events
       - ./configs:/configs
+      - ./akka-logs:/logs
   node-4:
     hostname: node-4
     build:
@@ -40,6 +43,7 @@ services:
     volumes:
       - ./events:/events
       - ./configs:/configs
+      - ./akka-logs:/logs
   node-5:
     hostname: node-5
     build:
@@ -48,4 +52,5 @@ services:
     volumes:
       - ./events:/events
       - ./configs:/configs
+      - ./akka-logs:/logs
 

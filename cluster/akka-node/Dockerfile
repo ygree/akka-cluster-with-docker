@@ -1,6 +1,6 @@
 ARG app_conf
 
-FROM akka-cluster-demo:1.0
+FROM akka-cluster-demo:1.0.3
 
 USER root
 
@@ -23,7 +23,7 @@ RUN echo "daemon ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/default;  \
 
 # RUN mkdir /evts
 # RUN chown daemon:daemon /evts
-VOLUME [ "/events", "/configs" ]
+VOLUME [ "/events", "/configs", "/logs" ]
 
 USER daemon
 
